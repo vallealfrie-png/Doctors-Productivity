@@ -3,132 +3,292 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor Revenue Recursive Fetch</title>
+    <title>Marketing Intelligence - Doctor Performance</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-</head>
-<body class="bg-gray-100 text-gray-800 font-sans">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        @property --bg-angle { inherits: false; initial-value: 0deg; syntax: "<angle>"; }
+        @keyframes spin { to { --bg-angle: 360deg; } }
+        
+        @keyframes neonPulse {
+            0%, 100% { text-shadow: 0 0 10px rgba(99, 102, 241, 0.4); opacity: 0.8; }
+            50% { text-shadow: 0 0 25px rgba(99, 102, 241, 1), 0 0 40px rgba(99, 102, 241, 0.6); opacity: 1; }
+        }
 
-    <div class="max-w-6xl mx-auto p-6">
-        <div class="bg-white rounded-2xl shadow-sm p-8 mb-8 border border-gray-200">
-            <h1 class="text-3xl font-extrabold text-gray-900">Total Doctor Revenue Analysis</h1>
-            <p class="text-gray-500">Recursive selection from <code>doctors</code> table</p>
-            
-            <div id="loading-bar-container" class="mt-6">
-                <div class="flex justify-between mb-2">
-                    <span id="fetch-status" class="text-sm font-bold text-indigo-600">Initializing connection...</span>
-                    <span id="row-count" class="text-sm text-gray-400">0 rows</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                    <div id="progress-fill" class="bg-indigo-600 h-2 rounded-full transition-all duration-300" style="width: 5%"></div>
-                </div>
+        body { background-color: #010101; color: #e5e5e5; display: flex; height: 100vh; overflow: hidden; font-family: 'Inter', sans-serif; }
+        
+        #sidebar { width: 220px; border-right: 1px solid #1a1a1a; background: #050505; display: flex; flex-direction: column; flex-shrink: 0; z-index: 50;}
+        #deptList { flex-grow: 1; overflow-y: auto; scrollbar-width: none; padding: 12px; }
+        
+        .dept-btn {
+            width: 100%; padding: 10px; margin-bottom: 6px; background: #0a0a0a;
+            border: 1px solid #1a1a1a; border-radius: 6px; color: #555;
+            font-size: 9px; font-weight: 800; text-transform: uppercase;
+            text-align: left; letter-spacing: 1px; transition: all 0.3s ease;
+        }
+        .dept-btn:hover { color: #888; border-color: #333; }
+        .dept-btn.active { color: #fff; border-color: #6366f1; background: #0c0c1e; border-left: 3px solid #6366f1; }
+
+        .home-btn {
+            display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px;
+            background: rgba(99, 102, 241, 0.1); border-bottom: 1px solid #1a1a1a;
+            color: #6366f1; font-size: 9px; font-weight: 900; text-transform: uppercase;
+            letter-spacing: 2px; transition: all 0.3s;
+        }
+
+        .neon-card { border: 2px solid transparent; border-radius: 12px; animation: spin 4s infinite linear; position: relative; }
+        .card-indigo { background: linear-gradient(#080808, #080808) padding-box, conic-gradient(from var(--bg-angle), #6366f1, #1e1b4b, #6366f1) border-box; }
+        .card-emerald { background: linear-gradient(#080808, #080808) padding-box, conic-gradient(from var(--bg-angle), #10b981, #064e3b, #10b981) border-box; }
+        .card-rose { background: linear-gradient(#080808, #080808) padding-box, conic-gradient(from var(--bg-angle), #f43f5e, #4c0519, #f43f5e) border-box; }
+        .card-amber { background: linear-gradient(#080808, #080808) padding-box, conic-gradient(from var(--bg-angle), #f59e0b, #451a03, #f59e0b) border-box; }
+
+        .pulsing-label { animation: neonPulse 2s infinite ease-in-out; }
+
+        main { flex: 1; overflow-y: auto; padding: 30px; }
+
+        #loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .progress-bar-bg { width: 280px; height: 2px; background: #111; overflow: hidden; margin-top: 20px; }
+        #progressBar { height: 100%; width: 0%; background: #6366f1; box-shadow: 0 0 15px #6366f1; transition: width 0.3s ease; }
+
+        .neon-select {
+            width: 100%; background: #0a0a0a; border: 1px solid #1a1a1a;
+            border-radius: 6px; color: #6366f1; font-size: 10px; font-weight: 900;
+            padding: 8px; text-transform: uppercase; outline: none; cursor: pointer;
+            appearance: none; transition: border-color 0.3s;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader">
+        <h1 id="loaderTitle" class="text-[10px] font-black uppercase tracking-[0.5em] text-indigo-500 animate-pulse">Initializing Data Stream</h1>
+        <div class="progress-bar-bg"><div id="progressBar"></div></div>
+    </div>
+
+    <aside id="sidebar">
+        <div class="home-btn"><i class="fa-solid fa-microchip"></i><span>Analytics Hub</span></div>
+
+        <div class="p-4 border-b border-neutral-900">
+             <h2 class="text-[9px] font-black text-neutral-400 uppercase tracking-widest mb-1">Status:</h2>
+             <p class="text-[10px] font-bold text-indigo-500 uppercase">Live Database Access</p>
+        </div>
+        
+        <div class="p-3 border-b border-neutral-900">
+            <h2 class="text-[8px] font-black text-neutral-500 uppercase tracking-widest mb-2">Revenue Month:</h2>
+            <select id="monthFilter" onchange="handleFilterUpdate()" class="neon-select">
+                <option value="all">Full Fiscal Year</option>
+            </select>
+        </div>
+
+        <div id="deptList">
+            <button onclick="handleDeptChange('all', this)" class="dept-btn active">Total Grid</button>
+        </div>
+    </aside>
+
+    <main>
+        <header class="flex justify-between items-start mb-10">
+            <div>
+                <h1 class="text-3xl font-black uppercase text-white tracking-tighter">
+                    Doctor Revenue <span class="text-indigo-500">Intelligence</span>
+                </h1>
+                <p class="text-[10px] text-neutral-500 font-bold uppercase tracking-[0.4em] mt-1">Recursive Data Link: Active</p>
+            </div>
+            <div class="text-right">
+                <p id="activeDeptLabel" class="text-2xl font-black uppercase tracking-tighter text-indigo-500 pulsing-label">GLOBAL VIEW</p>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="neon-card card-indigo p-8">
+                <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Total Staff Count</p>
+                <h2 id="totalDoctors" class="text-7xl font-black text-white tracking-tighter">0</h2>
+            </div>
+            <div class="neon-card card-emerald p-8 lg:col-span-2">
+                <p class="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-4">Performance Bracket Distribution</p>
+                <div id="tierStats" class="flex flex-wrap gap-x-12 gap-y-6 text-white"></div>
             </div>
         </div>
 
-        <div id="dashboard-content" class="hidden opacity-0 transition-opacity duration-1000">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
+            <div class="neon-card card-rose p-6 h-[400px]"><canvas id="revenueChart"></canvas></div>
+            <div class="neon-card card-amber p-6 h-[400px] overflow-y-auto">
+                <p class="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-4">Elite Tier Registry</p>
+                <div id="leaderboard" class="space-y-2 text-xs"></div>
+            </div>
         </div>
-    </div>
+    </main>
 
     <script>
+        // Use your credentials
         const SUPABASE_URL = 'https://gqlmaxlabfdvansqjufd.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxbG1heGxhYmZkdmFuc3FqdWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDgxODAsImV4cCI6MjA5MzAyNDE4MH0.IdiyhRSxoEGguocFAJJyfugyFfLUvQ_IR58-8gSH48U';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // RECURSIVE FETCHING FUNCTION
-        async function fetchAllData(tableName) {
+        let masterData = []; // Raw records
+        let doctorTotals = []; // Aggregated by doctor
+        let currentDept = 'all';
+
+        async function init() {
             let allRows = [];
-            let errorOccurred = null;
             let rangeStart = 0;
-            const pageSize = 1000; // Supabase limit
+            const pageSize = 1000;
+            const progressBar = document.getElementById('progressBar');
+            const loaderTitle = document.getElementById('loaderTitle');
 
-            const statusLabel = document.getElementById('fetch-status');
-            const countLabel = document.getElementById('row-count');
-            const progress = document.getElementById('progress-fill');
+            try {
+                // RECURSIVE FETCHING
+                while (true) {
+                    const { data, error, count } = await sb
+                        .from('doctors')
+                        .select('*', { count: 'exact' })
+                        .range(rangeStart, rangeStart + pageSize - 1);
 
-            while (true) {
-                statusLabel.innerText = `Fetching records ${rangeStart} to ${rangeStart + pageSize}...`;
-                
-                const { data, error } = await supabase
-                    .from(tableName)
-                    .select('doctor, revenue')
-                    .range(rangeStart, rangeStart + pageSize - 1);
+                    if (error) throw error;
+                    if (!data || data.length === 0) break;
 
-                if (error) {
-                    errorOccurred = error;
-                    break;
+                    allRows = [...allRows, ...data];
+                    
+                    if (count) {
+                        const perc = (allRows.length / count) * 100;
+                        progressBar.style.width = `${perc}%`;
+                        loaderTitle.innerText = `SYNCING CORE: ${allRows.length} / ${count}`;
+                    }
+
+                    if (data.length < pageSize) break;
+                    rangeStart += pageSize;
                 }
 
-                allRows = allRows.concat(data);
-                countLabel.innerText = `${allRows.length.toLocaleString()} rows fetched`;
+                masterData = allRows;
+                setupFilters();
                 
-                // If we got fewer rows than the page size, we've reached the end
-                if (data.length < pageSize) break;
+                document.getElementById('loader').style.display = 'none';
+                render();
 
-                rangeStart += pageSize;
-                // Visual progress simulation
-                progress.style.width = Math.min(95, (allRows.length / 30000) * 100) + "%";
+            } catch (err) {
+                loaderTitle.innerText = "LINK FAILURE: " + err.message;
+                loaderTitle.style.color = "#f43f5e";
             }
-
-            if (errorOccurred) throw errorOccurred;
-            
-            progress.style.width = "100%";
-            statusLabel.innerText = "Data load complete. Processing analysis...";
-            return allRows;
         }
 
-        function processAndDisplay(rawData) {
-            // 1. Group by Doctor Name
-            const doctorTotals = rawData.reduce((acc, row) => {
-                const name = row.doctor || 'Unknown';
-                const rev = parseFloat(row.revenue) || 0;
-                acc[name] = (acc[name] || 0) + rev;
-                return acc;
-            }, {});
+        function setupFilters() {
+            // Setup Departments
+            const depts = [...new Set(masterData.map(d => d.department))].filter(Boolean).sort();
+            const list = document.getElementById('deptList');
+            depts.forEach(d => {
+                const btn = document.createElement('button');
+                btn.className = 'dept-btn';
+                btn.textContent = d;
+                btn.onclick = () => handleDeptChange(d, btn);
+                list.appendChild(btn);
+            });
 
-            const doctors = Object.keys(doctorTotals).map(name => ({
+            // Setup Months
+            const months = [...new Set(masterData.map(d => d.month))].filter(Boolean);
+            const monthSelect = document.getElementById('monthFilter');
+            months.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m; opt.textContent = m;
+                monthSelect.appendChild(opt);
+            });
+        }
+
+        function handleDeptChange(dept, el) {
+            currentDept = dept;
+            document.querySelectorAll('.dept-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            render();
+        }
+
+        function handleFilterUpdate() { render(); }
+
+        function render() {
+            const selectedMonth = document.getElementById('monthFilter').value;
+            let filtered = masterData;
+
+            if (currentDept !== 'all') filtered = filtered.filter(d => d.department === currentDept);
+            if (selectedMonth !== 'all') filtered = filtered.filter(d => d.month === selectedMonth);
+
+            // AGGREGATE THROUGH DOCTOR
+            const agg = {};
+            filtered.forEach(r => {
+                agg[r.doctor] = (agg[r.doctor] || 0) + (parseFloat(r.revenue) || 0);
+            });
+
+            doctorTotals = Object.keys(agg).map(name => ({
                 name,
-                total: doctorTotals[name]
-            }));
+                revenue: agg[name]
+            })).sort((a, b) => b.revenue - a.revenue);
 
-            // 2. Bracket Analysis
+            // DEFINE BRACKETS
             const brackets = [
-                { title: "Elite (> 10M)", min: 10000000, max: Infinity, count: 0, color: "bg-purple-500" },
-                { title: "High Value (5M-10M)", min: 5000000, max: 10000000, count: 0, color: "bg-blue-500" },
-                { title: "Mid-Tier (2M-5M)", min: 2000000, max: 5000000, count: 0, color: "bg-emerald-500" },
-                { title: "Growth (1M-2M)", min: 1000000, max: 2000000, count: 0, color: "bg-amber-500" },
-                { title: "Standard (< 1M)", min: -Infinity, max: 1000000, count: 0, color: "bg-slate-400" }
+                { id: '1', label: 'Elite (>10M)', min: 10000000, max: Infinity, count: 0 },
+                { id: '2', label: 'High (5M-10M)', min: 5000000, max: 10000000, count: 0 },
+                { id: '3', label: 'Mid (2M-5M)', min: 2000000, max: 5000000, count: 0 },
+                { id: '4', label: 'Growth (1M-2M)', min: 1000000, max: 2000000, count: 0 },
+                { id: '5', label: 'Standard (<1M)', min: -Infinity, max: 1000000, count: 0 }
             ];
 
-            doctors.forEach(doc => {
-                const b = brackets.find(b => doc.total > b.min && doc.total <= b.max);
+            doctorTotals.forEach(doc => {
+                const b = brackets.find(b => doc.revenue > b.min && doc.revenue <= b.max);
                 if (b) b.count++;
             });
 
-            // 3. Render
-            const container = document.getElementById('dashboard-content');
-            const grid = container.querySelector('div');
-            grid.innerHTML = brackets.map(b => `
-                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-l-${b.color.split('-')[1]}-500 transition-transform hover:scale-105">
-                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider">${b.title}</h3>
-                    <p class="text-4xl font-black text-gray-800 mt-2">${b.count}</p>
-                    <p class="text-xs text-gray-500 mt-1 uppercase font-semibold italic">Doctors</p>
+            // UI UPDATES
+            document.getElementById('activeDeptLabel').innerText = currentDept.toUpperCase();
+            document.getElementById('totalDoctors').innerText = doctorTotals.length.toLocaleString();
+
+            const tierContainer = document.getElementById('tierStats');
+            tierContainer.innerHTML = brackets.map(b => `
+                <div>
+                    <p class="text-[9px] font-black text-neutral-500 uppercase tracking-widest">${b.label}</p>
+                    <p class="text-3xl font-black">${b.count}</p>
                 </div>
             `).join('');
 
-            container.classList.remove('hidden');
-            setTimeout(() => container.classList.add('opacity-100'), 100);
-            document.getElementById('loading-bar-container').classList.add('hidden');
+            updateVisuals();
         }
 
-        // Start process
-        fetchAllData('doctors')
-            .then(data => processAndDisplay(data))
-            .catch(err => {
-                document.getElementById('fetch-status').innerText = "Error: " + err.message;
-                document.getElementById('fetch-status').classList.add('text-red-600');
+        let mainChart;
+        function updateVisuals() {
+            // Leaderboard
+            const lb = document.getElementById('leaderboard');
+            lb.innerHTML = doctorTotals.slice(0, 15).map(d => `
+                <div class="flex justify-between border-b border-neutral-900 pb-1">
+                    <span class="text-neutral-300 font-bold uppercase truncate pr-4">${d.name}</span>
+                    <span class="text-indigo-400 font-black">₱${Math.round(d.revenue).toLocaleString()}</span>
+                </div>
+            `).join('');
+
+            // Revenue Chart (Top 10)
+            const top10 = doctorTotals.slice(0, 10);
+            if (mainChart) mainChart.destroy();
+            mainChart = new Chart(document.getElementById('revenueChart'), {
+                type: 'bar',
+                data: {
+                    labels: top10.map(d => d.name.split(',')[0]),
+                    datasets: [{
+                        label: 'REVENUE',
+                        data: top10.map(d => d.revenue),
+                        backgroundColor: '#6366f1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { grid: { color: '#111' }, ticks: { color: '#444' } },
+                        x: { grid: { display: false }, ticks: { color: '#888', font: { size: 9, weight: 'bold' } } }
+                    }
+                }
             });
+        }
+
+        init();
     </script>
 </body>
 </html>
