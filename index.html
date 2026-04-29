@@ -95,7 +95,9 @@
                 <h1 class="text-3xl font-black uppercase text-white tracking-tighter">
                     Doctor Revenue <span class="text-indigo-500">Intelligence</span>
                 </h1>
-                <p class="text-[10px] text-neutral-500 font-bold uppercase tracking-[0.4em] mt-1">Recursive Data Link: Active</p>
+                <p class="text-[10px] text-neutral-500 font-bold uppercase tracking-[0.4em] mt-1">
+                    Excluding Emergency Department
+                </p>
             </div>
             <div class="text-right">
                 <p id="activeDeptLabel" class="text-2xl font-black uppercase tracking-tighter text-indigo-500 pulsing-label">GLOBAL VIEW</p>
@@ -104,11 +106,11 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div class="neon-card card-indigo p-8">
-                <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Total Staff Count</p>
+                <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Active Doctors</p>
                 <h2 id="totalDoctors" class="text-7xl font-black text-white tracking-tighter">0</h2>
             </div>
             <div class="neon-card card-emerald p-8 lg:col-span-2">
-                <p class="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-4">Performance Bracket Distribution</p>
+                <p class="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-4">Bracket Distribution (Excl. Emergency)</p>
                 <div id="tierStats" class="flex flex-wrap gap-x-12 gap-y-6 text-white"></div>
             </div>
         </div>
@@ -116,20 +118,19 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
             <div class="neon-card card-rose p-6 h-[400px]"><canvas id="revenueChart"></canvas></div>
             <div class="neon-card card-amber p-6 h-[400px] overflow-y-auto">
-                <p class="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-4">Elite Tier Registry</p>
+                <p class="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-4">Top Revenue Registry</p>
                 <div id="leaderboard" class="space-y-2 text-xs"></div>
             </div>
         </div>
     </main>
 
     <script>
-        // Use your credentials
         const SUPABASE_URL = 'https://gqlmaxlabfdvansqjufd.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxbG1heGxhYmZkdmFuc3FqdWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDgxODAsImV4cCI6MjA5MzAyNDE4MH0.IdiyhRSxoEGguocFAJJyfugyFfLUvQ_IR58-8gSH48U';
         const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let masterData = []; // Raw records
-        let doctorTotals = []; // Aggregated by doctor
+        let masterData = []; 
+        let doctorTotals = []; 
         let currentDept = 'all';
 
         async function init() {
@@ -140,7 +141,7 @@
             const loaderTitle = document.getElementById('loaderTitle');
 
             try {
-                // RECURSIVE FETCHING
+                // RECURSIVE FETCHING (All Rows)
                 while (true) {
                     const { data, error, count } = await sb
                         .from('doctors')
@@ -175,8 +176,11 @@
         }
 
         function setupFilters() {
-            // Setup Departments
-            const depts = [...new Set(masterData.map(d => d.department))].filter(Boolean).sort();
+            // Setup Departments (Excluding Emergency from the list too)
+            const depts = [...new Set(masterData.map(d => d.department))]
+                          .filter(d => d && d !== 'Emergency')
+                          .sort();
+            
             const list = document.getElementById('deptList');
             depts.forEach(d => {
                 const btn = document.createElement('button');
@@ -207,15 +211,18 @@
 
         function render() {
             const selectedMonth = document.getElementById('monthFilter').value;
-            let filtered = masterData;
+            
+            // 1. FILTERING (MANDATORY EXCLUSION OF EMERGENCY)
+            let filtered = masterData.filter(d => d.department !== 'Emergency');
 
             if (currentDept !== 'all') filtered = filtered.filter(d => d.department === currentDept);
             if (selectedMonth !== 'all') filtered = filtered.filter(d => d.month === selectedMonth);
 
-            // AGGREGATE THROUGH DOCTOR
+            // 2. AGGREGATE BY DOCTOR
             const agg = {};
             filtered.forEach(r => {
-                agg[r.doctor] = (agg[r.doctor] || 0) + (parseFloat(r.revenue) || 0);
+                const rev = parseFloat(r.revenue) || 0;
+                agg[r.doctor] = (agg[r.doctor] || 0) + rev;
             });
 
             doctorTotals = Object.keys(agg).map(name => ({
@@ -223,13 +230,13 @@
                 revenue: agg[name]
             })).sort((a, b) => b.revenue - a.revenue);
 
-            // DEFINE BRACKETS
+            // 3. DEFINE BRACKETS
             const brackets = [
-                { id: '1', label: 'Elite (>10M)', min: 10000000, max: Infinity, count: 0 },
-                { id: '2', label: 'High (5M-10M)', min: 5000000, max: 10000000, count: 0 },
-                { id: '3', label: 'Mid (2M-5M)', min: 2000000, max: 5000000, count: 0 },
-                { id: '4', label: 'Growth (1M-2M)', min: 1000000, max: 2000000, count: 0 },
-                { id: '5', label: 'Standard (<1M)', min: -Infinity, max: 1000000, count: 0 }
+                { label: 'Elite (>10M)', min: 10000000, max: Infinity, count: 0 },
+                { label: 'High (5M-10M)', min: 5000000, max: 10000000, count: 0 },
+                { label: 'Mid (2M-5M)', min: 2000000, max: 5000000, count: 0 },
+                { label: 'Growth (1M-2M)', min: 1000000, max: 2000000, count: 0 },
+                { label: 'Standard (<1M)', min: -Infinity, max: 1000000, count: 0 }
             ];
 
             doctorTotals.forEach(doc => {
@@ -237,8 +244,10 @@
                 if (b) b.count++;
             });
 
-            // UI UPDATES
-            document.getElementById('activeDeptLabel').innerText = currentDept.toUpperCase();
+            // 4. UI UPDATES
+            document.getElementById('activeDeptLabel').innerText = 
+                currentDept === 'all' ? "GLOBAL VIEW (EXCL. EMER)" : currentDept.toUpperCase();
+            
             document.getElementById('totalDoctors').innerText = doctorTotals.length.toLocaleString();
 
             const tierContainer = document.getElementById('tierStats');
@@ -263,7 +272,7 @@
                 </div>
             `).join('');
 
-            // Revenue Chart (Top 10)
+            // Bar Chart (Top 10)
             const top10 = doctorTotals.slice(0, 10);
             if (mainChart) mainChart.destroy();
             mainChart = new Chart(document.getElementById('revenueChart'), {
