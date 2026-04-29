@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Revenue Recursive Fetch</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+
+    <div class="max-w-6xl mx-auto p-6">
+        <div class="bg-white rounded-2xl shadow-sm p-8 mb-8 border border-gray-200">
+            <h1 class="text-3xl font-extrabold text-gray-900">Total Doctor Revenue Analysis</h1>
+            <p class="text-gray-500">Recursive selection from <code>doctors</code> table</p>
+            
+            <div id="loading-bar-container" class="mt-6">
+                <div class="flex justify-between mb-2">
+                    <span id="fetch-status" class="text-sm font-bold text-indigo-600">Initializing connection...</span>
+                    <span id="row-count" class="text-sm text-gray-400">0 rows</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="progress-fill" class="bg-indigo-600 h-2 rounded-full transition-all duration-300" style="width: 5%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="dashboard-content" class="hidden opacity-0 transition-opacity duration-1000">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gqlmaxlabfdvansqjufd.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxbG1heGxhYmZkdmFuc3FqdWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDgxODAsImV4cCI6MjA5MzAyNDE4MH0.IdiyhRSxoEGguocFAJJyfugyFfLUvQ_IR58-8gSH48U';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // RECURSIVE FETCHING FUNCTION
+        async function fetchAllData(tableName) {
+            let allRows = [];
+            let errorOccurred = null;
+            let rangeStart = 0;
+            const pageSize = 1000; // Supabase limit
+
+            const statusLabel = document.getElementById('fetch-status');
+            const countLabel = document.getElementById('row-count');
+            const progress = document.getElementById('progress-fill');
+
+            while (true) {
+                statusLabel.innerText = `Fetching records ${rangeStart} to ${rangeStart + pageSize}...`;
+                
+                const { data, error } = await supabase
+                    .from(tableName)
+                    .select('doctor, revenue')
+                    .range(rangeStart, rangeStart + pageSize - 1);
+
+                if (error) {
+                    errorOccurred = error;
+                    break;
+                }
+
+                allRows = allRows.concat(data);
+                countLabel.innerText = `${allRows.length.toLocaleString()} rows fetched`;
+                
+                // If we got fewer rows than the page size, we've reached the end
+                if (data.length < pageSize) break;
+
+                rangeStart += pageSize;
+                // Visual progress simulation
+                progress.style.width = Math.min(95, (allRows.length / 30000) * 100) + "%";
+            }
+
+            if (errorOccurred) throw errorOccurred;
+            
+            progress.style.width = "100%";
+            statusLabel.innerText = "Data load complete. Processing analysis...";
+            return allRows;
+        }
+
+        function processAndDisplay(rawData) {
+            // 1. Group by Doctor Name
+            const doctorTotals = rawData.reduce((acc, row) => {
+                const name = row.doctor || 'Unknown';
+                const rev = parseFloat(row.revenue) || 0;
+                acc[name] = (acc[name] || 0) + rev;
+                return acc;
+            }, {});
+
+            const doctors = Object.keys(doctorTotals).map(name => ({
+                name,
+                total: doctorTotals[name]
+            }));
+
+            // 2. Bracket Analysis
+            const brackets = [
+                { title: "Elite (> 10M)", min: 10000000, max: Infinity, count: 0, color: "bg-purple-500" },
+                { title: "High Value (5M-10M)", min: 5000000, max: 10000000, count: 0, color: "bg-blue-500" },
+                { title: "Mid-Tier (2M-5M)", min: 2000000, max: 5000000, count: 0, color: "bg-emerald-500" },
+                { title: "Growth (1M-2M)", min: 1000000, max: 2000000, count: 0, color: "bg-amber-500" },
+                { title: "Standard (< 1M)", min: -Infinity, max: 1000000, count: 0, color: "bg-slate-400" }
+            ];
+
+            doctors.forEach(doc => {
+                const b = brackets.find(b => doc.total > b.min && doc.total <= b.max);
+                if (b) b.count++;
+            });
+
+            // 3. Render
+            const container = document.getElementById('dashboard-content');
+            const grid = container.querySelector('div');
+            grid.innerHTML = brackets.map(b => `
+                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-l-${b.color.split('-')[1]}-500 transition-transform hover:scale-105">
+                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider">${b.title}</h3>
+                    <p class="text-4xl font-black text-gray-800 mt-2">${b.count}</p>
+                    <p class="text-xs text-gray-500 mt-1 uppercase font-semibold italic">Doctors</p>
+                </div>
+            `).join('');
+
+            container.classList.remove('hidden');
+            setTimeout(() => container.classList.add('opacity-100'), 100);
+            document.getElementById('loading-bar-container').classList.add('hidden');
+        }
+
+        // Start process
+        fetchAllData('doctors')
+            .then(data => processAndDisplay(data))
+            .catch(err => {
+                document.getElementById('fetch-status').innerText = "Error: " + err.message;
+                document.getElementById('fetch-status').classList.add('text-red-600');
+            });
+    </script>
+</body>
+</html>
