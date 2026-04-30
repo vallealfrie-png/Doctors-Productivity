@@ -28,7 +28,7 @@
         .dept-btn:hover { color: #888; border-color: #333; }
         .dept-btn.active { color: #fff; border-color: #6366f1; background: #0c0c1e; border-left: 3px solid #6366f1; }
 
-        /* Neural Toggle Switch (All / TPP / Cash) */
+        /* Neural Toggle Switch */
         .switch-container {
             display: flex; background: #000; border: 1px solid #1a1a1a;
             border-radius: 8px; padding: 2px; margin-top: 8px; position: relative;
@@ -51,7 +51,7 @@
         /* Interactive Tier Trigger */
         .tier-trigger {
             cursor: pointer; padding: 10px; border-radius: 8px; border: 1px solid transparent;
-            transition: all 0.3s ease; min-width: 105px;
+            transition: all 0.3s ease; min-width: 90px;
         }
         .tier-trigger:hover { background: rgba(255,255,255,0.05); }
         .tier-trigger.active {
@@ -133,7 +133,7 @@
 
     <!-- Main Content Area -->
     <main>
-        <header class="flex justify-between items-start mb-10">
+        <header class="flex justify-between items-start mb-8">
             <div>
                 <h1 class="text-3xl font-black uppercase text-white tracking-tighter">
                     Marketing <span class="text-indigo-500">Intelligence</span>
@@ -145,39 +145,48 @@
             </div>
         </header>
 
-        <!-- Dynamic Tier Statistics -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <div class="neon-card card-indigo p-8">
-                <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Active Headcount</p>
-                <h2 id="totalDoctors" class="text-7xl font-black text-white tracking-tighter">0</h2>
+        <!-- Stats Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
+            <!-- Global Revenue -->
+            <div class="neon-card card-indigo p-6">
+                <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Aggregate Revenue</p>
+                <h2 id="globalRevenue" class="text-3xl font-black text-white tracking-tighter mt-2">₱0</h2>
             </div>
-            <div class="neon-card card-emerald p-8 lg:col-span-2">
-                <div id="tierStats" class="flex flex-wrap gap-x-4 gap-y-6 text-white justify-between">
+            
+            <!-- Personnel Count -->
+            <div class="neon-card card-indigo p-6">
+                <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Active Headcount</p>
+                <h2 id="totalDoctors" class="text-3xl font-black text-white tracking-tighter mt-2">0</h2>
+            </div>
+
+            <!-- Tier Distribution -->
+            <div class="neon-card card-emerald p-6 lg:col-span-2">
+                <div id="tierStats" class="flex flex-wrap gap-x-2 text-white justify-between">
                     <div id="tier-1-card" class="tier-trigger" onclick="toggleTierFilter(1)">
-                        <p class="text-[8px] text-neutral-500 uppercase tracking-widest">Elite (>10M)</p>
-                        <p id="tier-1" class="text-3xl font-black">0</p>
+                        <p class="text-[7px] text-neutral-500 uppercase tracking-widest">Elite (>10M)</p>
+                        <p id="tier-1" class="text-xl font-black">0</p>
                     </div>
                     <div id="tier-2-card" class="tier-trigger" onclick="toggleTierFilter(2)">
-                        <p class="text-[8px] text-neutral-500 uppercase tracking-widest">High (5-10M)</p>
-                        <p id="tier-2" class="text-3xl font-black">0</p>
+                        <p class="text-[7px] text-neutral-500 uppercase tracking-widest">High (5-10M)</p>
+                        <p id="tier-2" class="text-xl font-black">0</p>
                     </div>
                     <div id="tier-3-card" class="tier-trigger" onclick="toggleTierFilter(3)">
-                        <p class="text-[8px] text-neutral-500 uppercase tracking-widest">Mid (2-5M)</p>
-                        <p id="tier-3" class="text-3xl font-black">0</p>
+                        <p class="text-[7px] text-neutral-500 uppercase tracking-widest">Mid (2-5M)</p>
+                        <p id="tier-3" class="text-xl font-black">0</p>
                     </div>
                     <div id="tier-4-card" class="tier-trigger" onclick="toggleTierFilter(4)">
-                        <p class="text-[8px] text-neutral-500 uppercase tracking-widest">Growth (1-2M)</p>
-                        <p id="tier-4" class="text-3xl font-black">0</p>
+                        <p class="text-[7px] text-neutral-500 uppercase tracking-widest">Growth (1-2M)</p>
+                        <p id="tier-4" class="text-xl font-black">0</p>
                     </div>
                     <div id="tier-5-card" class="tier-trigger" onclick="toggleTierFilter(5)">
-                        <p class="text-[8px] text-neutral-500 uppercase tracking-widest">Std (<1M)</p>
-                        <p id="tier-5" class="text-3xl font-black">0</p>
+                        <p class="text-[7px] text-neutral-500 uppercase tracking-widest">Std (<1M)</p>
+                        <p id="tier-5" class="text-xl font-black">0</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Chart and Clickable Leaderboard -->
+        <!-- Chart and Leaderboard -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="neon-card card-rose p-6 h-[450px]"><canvas id="revenueChart"></canvas></div>
             <div class="neon-card card-amber p-6 h-[450px] overflow-y-auto">
@@ -196,7 +205,7 @@
         let currentDept = 'all';
         let paymentMode = 'all'; 
         let activeTier = null; 
-        let prevCounts = { total: 0, t1: 0, t2: 0, t3: 0, t4: 0, t5: 0 };
+        let prevCounts = { total: 0, t1: 0, t2: 0, t3: 0, t4: 0, t5: 0, revenue: 0 };
 
         async function init() {
             let allRows = [], rangeStart = 0, pageSize = 1000;
@@ -221,26 +230,24 @@
         function togglePayment(mode) {
             paymentMode = mode;
             const slider = document.getElementById('slider');
-            const options = ['all', 'tpp', 'cash'];
             slider.className = 'switch-slider pos-' + mode;
-            options.forEach(opt => document.getElementById('opt-' + opt).classList.toggle('active', opt === mode));
+            ['all', 'tpp', 'cash'].forEach(opt => document.getElementById('opt-' + opt).classList.toggle('active', opt === mode));
             render();
         }
 
         function toggleTierFilter(tier) {
-            const cardId = `tier-${tier}-card`;
             if (activeTier === tier) {
                 activeTier = null;
-                document.getElementById(cardId).classList.remove('active');
+                document.getElementById(`tier-${tier}-card`).classList.remove('active');
             } else {
                 if (activeTier) document.getElementById(`tier-${activeTier}-card`).classList.remove('active');
                 activeTier = tier;
-                document.getElementById(cardId).classList.add('active');
+                document.getElementById(`tier-${tier}-card`).classList.add('active');
             }
             render();
         }
 
-        function animateValue(id, start, end) {
+        function animateValue(id, start, end, isCurrency = false) {
             const obj = document.getElementById(id);
             if (!obj) return;
             let startTimestamp = null;
@@ -248,7 +255,7 @@
                 if (!startTimestamp) startTimestamp = timestamp;
                 const progress = Math.min((timestamp - startTimestamp) / 800, 1);
                 const current = Math.floor(progress * (end - start) + start);
-                obj.innerText = current.toLocaleString();
+                obj.innerText = isCurrency ? `₱${current.toLocaleString()}` : current.toLocaleString();
                 if (progress < 1) window.requestAnimationFrame(step);
             };
             window.requestAnimationFrame(step);
@@ -288,20 +295,17 @@
             
             let filtered = masterData.filter(d => selectedPtTypes.includes(d.patient_type));
             
-            if (paymentMode === 'cash') {
-                filtered = filtered.filter(d => d.type === 'Self Pay');
-            } else if (paymentMode === 'tpp') {
-                const tppArray = ['HMO', 'INSURANCE', 'INDUSTRIAL'];
-                filtered = filtered.filter(d => tppArray.includes(d.type));
-            }
+            if (paymentMode === 'cash') filtered = filtered.filter(d => d.type === 'Self Pay');
+            else if (paymentMode === 'tpp') filtered = filtered.filter(d => ['HMO', 'INSURANCE', 'INDUSTRIAL'].includes(d.type));
 
             if (currentDept !== 'all') filtered = filtered.filter(d => d.department === currentDept);
             if (selectedMonth !== 'all') filtered = filtered.filter(d => d.month === selectedMonth);
 
+            // Calculate Global Revenue for the current filter
+            const globalTotal = filtered.reduce((sum, r) => sum + (parseFloat(r.revenue) || 0), 0);
+
             const agg = {};
-            filtered.forEach(r => {
-                agg[r.doctor] = (agg[r.doctor] || 0) + (parseFloat(r.revenue) || 0);
-            });
+            filtered.forEach(r => { agg[r.doctor] = (agg[r.doctor] || 0) + (parseFloat(r.revenue) || 0); });
 
             let doctorTotals = Object.keys(agg).map(name => ({ name, revenue: agg[name] }));
 
@@ -319,20 +323,21 @@
             });
 
             if (activeTier !== null) {
-                const selectedBracket = brackets[activeTier - 1];
-                doctorTotals = doctorTotals.filter(doc => doc.revenue > selectedBracket.min && doc.revenue <= selectedBracket.max);
+                const b = brackets[activeTier - 1];
+                doctorTotals = doctorTotals.filter(doc => doc.revenue > b.min && doc.revenue <= b.max);
             }
 
             doctorTotals.sort((a, b) => b.revenue - a.revenue);
 
+            // Update Animations
+            animateValue("globalRevenue", prevCounts.revenue, globalTotal, true);
             animateValue("totalDoctors", prevCounts.total, doctorTotals.length);
-            prevCounts.total = doctorTotals.length;
+            brackets.forEach((b, i) => animateValue(b.id, prevCounts[`t${i+1}`] || 0, b.count));
 
-            brackets.forEach((b, i) => {
-                const k = `t${i+1}`;
-                animateValue(b.id, prevCounts[k] || 0, b.count);
-                prevCounts[k] = b.count;
-            });
+            // Sync Previous Counts
+            prevCounts.revenue = globalTotal;
+            prevCounts.total = doctorTotals.length;
+            brackets.forEach((b, i) => prevCounts[`t${i+1}`] = b.count);
 
             document.getElementById('activeDeptLabel').innerText = currentDept.toUpperCase();
             updateVisuals(doctorTotals);
@@ -344,9 +349,8 @@
             lb.innerHTML = data.slice(0, 50).map(d => `
                 <div class="flex justify-between border-b border-neutral-900 pb-2 items-center group">
                     <a href="profile.html?name=${encodeURIComponent(d.name)}" 
-                       class="text-neutral-300 font-bold uppercase truncate pr-4 hover:text-indigo-400 transition-colors cursor-pointer flex items-center">
-                       <i class="fa-solid fa-user-doctor mr-3 text-[10px] opacity-30 group-hover:opacity-100 transition-opacity"></i>
-                       ${d.name}
+                       class="text-neutral-300 font-bold uppercase truncate pr-4 hover:text-indigo-400 transition-colors flex items-center">
+                       <i class="fa-solid fa-user-doctor mr-3 text-[10px] opacity-30 group-hover:opacity-100"></i>${d.name}
                     </a>
                     <span class="text-indigo-400 font-black">₱${Math.round(d.revenue).toLocaleString()}</span>
                 </div>
