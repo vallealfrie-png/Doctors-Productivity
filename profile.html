@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor Profile | Neural Analytics</title>
+    <title>Personnel Analytics | Neural Profile</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Highcharts Core -->
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -13,17 +14,36 @@
         .glass-panel { background: rgba(10, 10, 10, 0.8); border: 1px solid #1a1a1a; border-radius: 12px; }
         .neon-text { color: #6366f1; text-shadow: 0 0 10px rgba(99, 102, 241, 0.5); }
         .chart-container { width: 100%; height: 300px; }
-        select { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 0.5rem center; background-size: 1em; }
+        
+        /* Custom Select Styling */
+        select { 
+            appearance: none; 
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.7rem center;
+            background-size: 1em;
+        }
+
+        #loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
+        .progress-bar-bg { width: 200px; height: 2px; background: #111; overflow: hidden; margin-top: 20px; }
+        #progressBar { height: 100%; width: 0%; background: #6366f1; transition: width 0.3s ease; }
     </style>
 </head>
 <body class="p-8">
-    <nav class="mb-8 flex justify-between items-center">
+
+    <!-- Sync Loader -->
+    <div id="loader">
+        <p class="text-[9px] font-black uppercase tracking-[0.5em] text-indigo-500 animate-pulse">Synchronizing Neural Data</p>
+        <div class="progress-bar-bg"><div id="progressBar"></div></div>
+    </div>
+
+    <nav class="mb-8 flex justify-between items-center max-w-6xl mx-auto">
         <a href="index.html" class="text-[10px] font-black uppercase tracking-[0.3em] text-neutral-500 hover:text-white transition-colors">
-            <i class="fa-solid fa-arrow-left mr-2"></i> Back to Matrix
+            <i class="fa-solid fa-arrow-left mr-2"></i> Back to Grid
         </a>
         <div class="flex items-center gap-4">
-            <span class="text-[9px] font-black text-neutral-500 uppercase">Temporal Filter:</span>
-            <select id="monthFilter" onchange="processData()" class="bg-black border border-neutral-800 rounded px-4 py-1 text-[10px] font-bold text-indigo-500 uppercase outline-none cursor-pointer pr-8">
+            <span class="text-[9px] font-black text-neutral-600 uppercase tracking-widest">Temporal Focus:</span>
+            <select id="monthFilter" onchange="processData()" class="bg-black border border-neutral-800 rounded-md px-4 py-1.5 text-[10px] font-bold text-indigo-500 uppercase outline-none cursor-pointer pr-10">
                 <option value="all">Full Cycle</option>
             </select>
         </div>
@@ -34,14 +54,14 @@
         <header class="mb-10 border-b border-neutral-900 pb-8 flex justify-between items-end">
             <div>
                 <p class="text-indigo-500 font-black text-[10px] uppercase tracking-[0.5em] mb-2">Personnel Profile</p>
-                <h1 id="docName" class="text-5xl font-black uppercase tracking-tighter text-white">Loading...</h1>
-                <div id="docDept" class="mt-4 inline-block px-3 py-1 bg-indigo-900/30 border border-indigo-500/50 rounded text-indigo-400 text-[10px] font-bold uppercase tracking-widest">
-                    Department
+                <h1 id="docName" class="text-5xl font-black uppercase tracking-tighter text-white">---</h1>
+                <div id="docDept" class="mt-4 inline-block px-3 py-1 bg-indigo-900/20 border border-indigo-500/30 rounded text-indigo-400 text-[10px] font-bold uppercase tracking-widest">
+                    ---
                 </div>
             </div>
             <div class="text-right">
-                <p class="text-neutral-600 text-[9px] font-black uppercase tracking-widest">Revenue Contribution</p>
-                <p id="sharePercent" class="text-3xl font-black text-emerald-500 tracking-tighter">0.00%</p>
+                <p class="text-neutral-600 text-[9px] font-black uppercase tracking-widest mb-1">Global Contribution</p>
+                <p id="sharePercent" class="text-4xl font-black text-emerald-500 tracking-tighter">0.00%</p>
             </div>
         </header>
 
@@ -52,11 +72,11 @@
                 <h3 id="totalRev" class="text-2xl font-black neon-text">₱0</h3>
             </div>
             <div class="glass-panel p-6 flex flex-col items-center justify-center text-center border-b-2 border-emerald-600">
-                <p class="text-neutral-500 text-[9px] font-black uppercase tracking-widest mb-1">Global Revenue</p>
+                <p class="text-neutral-500 text-[9px] font-black uppercase tracking-widest mb-1">Global Total</p>
                 <h3 id="globalRev" class="text-2xl font-black text-white">₱0</h3>
             </div>
             <div class="glass-panel p-6 flex flex-col items-center justify-center text-center border-b-2 border-rose-600">
-                <p class="text-neutral-500 text-[9px] font-black uppercase tracking-widest mb-1">Patient Count</p>
+                <p class="text-neutral-500 text-[9px] font-black uppercase tracking-widest mb-1">Patient Volume</p>
                 <h3 id="patientCount" class="text-2xl font-black text-white">0</h3>
             </div>
             <div class="glass-panel p-6 flex flex-col items-center justify-center text-center border-b-2 border-amber-600">
@@ -67,12 +87,19 @@
 
         <!-- Charts Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Main Performance Chart -->
             <div class="glass-panel p-6">
                 <div id="monthlyChart" class="chart-container"></div>
             </div>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="glass-panel p-4"><div id="patientTypeChart" class="chart-container"></div></div>
-                <div class="glass-panel p-4"><div id="payorMixChart" class="chart-container"></div></div>
+                <!-- Distribution Charts -->
+                <div class="glass-panel p-4">
+                    <div id="patientTypeChart" class="chart-container"></div>
+                </div>
+                <div class="glass-panel p-4">
+                    <div id="payorMixChart" class="chart-container"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -86,10 +113,10 @@
         let globalAllData = [];
         let doctorName = "";
 
-        // Global Highcharts Dark Theme
+        // Highcharts Theme Config
         Highcharts.setOptions({
             chart: { backgroundColor: 'transparent', style: { fontFamily: 'Inter' } },
-            title: { style: { color: '#555', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase' } },
+            title: { style: { color: '#555', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '2px' } },
             credits: { enabled: false },
             tooltip: { backgroundColor: '#000', style: { color: '#fff' }, borderWidth: 1, borderColor: '#333' }
         });
@@ -99,21 +126,48 @@
             doctorName = params.get('name');
             if (!doctorName) return;
 
-            // 1. Fetch Doctor Data
-            const docRes = await sb.from('doctors').select('*').eq('doctor', doctorName);
-            doctorAllData = docRes.data;
+            // Recursive Fetch Logic (Pagination)
+            let allRows = [];
+            let rangeStart = 0;
+            const pageSize = 1000;
+            const progressBar = document.getElementById('progressBar');
 
-            // 2. Fetch Global Data (only revenue and month for efficiency)
-            const globalRes = await sb.from('doctors').select('revenue, month, type, patient_type');
-            globalAllData = globalRes.data;
+            try {
+                while (true) {
+                    const { data, error, count } = await sb
+                        .from('doctors')
+                        .select('doctor, revenue, month, type, patient_type, department', { count: 'exact' })
+                        .range(rangeStart, rangeStart + pageSize - 1);
+                    
+                    if (error) throw error;
+                    if (!data || data.length === 0) break;
+                    
+                    allRows = [...allRows, ...data];
+                    if (count) progressBar.style.width = `${(allRows.length / count) * 100}%`;
+                    
+                    if (data.length < pageSize) break;
+                    rangeStart += pageSize;
+                }
 
-            setupMonthFilter();
-            processData();
-            document.getElementById('profileContainer').classList.remove('opacity-0');
+                globalAllData = allRows;
+                doctorAllData = globalAllData.filter(d => d.doctor === doctorName);
+
+                setupMonthFilter();
+                processData();
+                
+                document.getElementById('loader').style.opacity = '0';
+                setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+                document.getElementById('profileContainer').classList.remove('opacity-0');
+            } catch (err) {
+                console.error("Data Sync Failed:", err);
+            }
         }
 
         function setupMonthFilter() {
             const months = [...new Set(globalAllData.map(d => d.month))].filter(Boolean);
+            const monthOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            months.sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
+
             const select = document.getElementById('monthFilter');
             months.forEach(m => {
                 const opt = document.createElement('option');
@@ -125,20 +179,21 @@
         function processData() {
             const filterMonth = document.getElementById('monthFilter').value;
 
-            // Filter Doctor Data
+            // Apply Filters to both sets
             let docFiltered = doctorAllData;
-            if (filterMonth !== 'all') docFiltered = docFiltered.filter(d => d.month === filterMonth);
-
-            // Filter Global Data
             let globalFiltered = globalAllData;
-            if (filterMonth !== 'all') globalFiltered = globalFiltered.filter(d => d.month === filterMonth);
 
-            // 1. Calculations
+            if (filterMonth !== 'all') {
+                docFiltered = docFiltered.filter(d => d.month === filterMonth);
+                globalFiltered = globalFiltered.filter(d => d.month === filterMonth);
+            }
+
+            // Calculations
             const personalRevenue = docFiltered.reduce((sum, r) => sum + (parseFloat(r.revenue) || 0), 0);
             const globalRevenue = globalFiltered.reduce((sum, r) => sum + (parseFloat(r.revenue) || 0), 0);
             const sharePercent = globalRevenue > 0 ? (personalRevenue / globalRevenue) * 100 : 0;
 
-            // 2. Aggregations for Charts
+            // Aggregations
             const monthlySeries = {};
             docFiltered.forEach(r => { monthlySeries[r.month] = (monthlySeries[r.month] || 0) + parseFloat(r.revenue); });
 
@@ -149,9 +204,9 @@
             docFiltered.forEach(r => { payors[r.type] = (payors[r.type] || 0) + 1; });
             const topPayorName = Object.keys(payors).length > 0 ? Object.keys(payors).reduce((a, b) => payors[a] > payors[b] ? a : b) : "-";
 
-            // 3. UI Update
+            // UI Rendering
             document.getElementById('docName').innerText = doctorName;
-            document.getElementById('docDept').innerText = docFiltered[0]?.department || 'General';
+            document.getElementById('docDept').innerText = doctorAllData[0]?.department || 'General';
             document.getElementById('totalRev').innerText = `₱${Math.round(personalRevenue).toLocaleString()}`;
             document.getElementById('globalRev').innerText = `₱${Math.round(globalRevenue).toLocaleString()}`;
             document.getElementById('patientCount').innerText = docFiltered.length.toLocaleString();
@@ -164,7 +219,7 @@
         function renderCharts(monthly, patients, payors) {
             Highcharts.chart('monthlyChart', {
                 chart: { type: 'column' },
-                title: { text: 'Monthly Performance', align: 'left' },
+                title: { text: 'Monthly Performance' },
                 xAxis: { categories: Object.keys(monthly), labels: { style: { color: '#888' } } },
                 yAxis: { title: { text: null }, gridLineColor: '#1a1a1a', labels: { style: { color: '#444' } } },
                 series: [{ name: 'Revenue', data: Object.values(monthly), color: '#6366f1', borderRadius: 5 }],
@@ -173,7 +228,7 @@
 
             Highcharts.chart('patientTypeChart', {
                 chart: { type: 'pie' },
-                title: { text: 'Patient Dist.' },
+                title: { text: 'Visit Type' },
                 plotOptions: { pie: { borderWidth: 0, dataLabels: { enabled: false }, showInLegend: true } },
                 series: [{ name: 'Visits', data: Object.entries(patients).map(([name, y]) => ({ name, y })), colors: ['#6366f1', '#10b981', '#f43f5e'] }],
                 legend: { itemStyle: { color: '#888', fontSize: '8px' } }
