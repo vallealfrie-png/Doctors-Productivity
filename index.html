@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marketing Intelligence - Dynamic Core</title>
+    <title>Marketing Intelligence - Neural Switch</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -28,12 +27,23 @@
         .dept-btn:hover { color: #888; border-color: #333; }
         .dept-btn.active { color: #fff; border-color: #6366f1; background: #0c0c1e; border-left: 3px solid #6366f1; }
 
-        .home-btn {
-            display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px;
-            background: rgba(99, 102, 241, 0.1); border-bottom: 1px solid #1a1a1a;
-            color: #6366f1; font-size: 9px; font-weight: 900; text-transform: uppercase;
-            letter-spacing: 2px;
+        /* Neural Toggle Switch */
+        .switch-container {
+            display: flex; background: #000; border: 1px solid #1a1a1a;
+            border-radius: 8px; padding: 2px; margin: 10px; position: relative;
         }
+        .switch-option {
+            flex: 1; text-align: center; font-size: 8px; font-weight: 900;
+            padding: 8px 0; cursor: pointer; z-index: 2; transition: color 0.3s;
+            text-transform: uppercase; letter-spacing: 1px; color: #444;
+        }
+        .switch-option.active { color: #fff; }
+        .switch-slider {
+            position: absolute; width: calc(50% - 2px); height: calc(100% - 4px);
+            background: #6366f1; border-radius: 6px; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+        }
+        .switch-slider.right { transform: translateX(100%); }
 
         .neon-card { border: 2px solid transparent; border-radius: 12px; animation: spin 4s infinite linear; position: relative; }
         .card-indigo { background: linear-gradient(#080808, #080808) padding-box, conic-gradient(from var(--bg-angle), #6366f1, #1e1b4b, #6366f1) border-box; }
@@ -42,62 +52,59 @@
         .card-amber { background: linear-gradient(#080808, #080808) padding-box, conic-gradient(from var(--bg-angle), #f59e0b, #451a03, #f59e0b) border-box; }
 
         main { flex: 1; overflow-y: auto; padding: 30px; }
-
         #loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .progress-bar-bg { width: 280px; height: 2px; background: #111; overflow: hidden; margin-top: 20px; }
-        #progressBar { height: 100%; width: 0%; background: #6366f1; box-shadow: 0 0 15px #6366f1; transition: width 0.3s ease; }
+        #progressBar { height: 100%; width: 0%; background: #6366f1; transition: width 0.3s ease; }
 
-        .neon-select {
-            width: 100%; background: #0a0a0a; border: 1px solid #1a1a1a;
-            border-radius: 6px; color: #6366f1; font-size: 10px; font-weight: 900;
-            padding: 8px; text-transform: uppercase; outline: none; cursor: pointer;
-        }
-
-        /* Custom Checkbox Style */
         .neon-checkbox {
             appearance: none; width: 14px; height: 14px; border: 1px solid #333;
             border-radius: 3px; background: #000; position: relative; cursor: pointer;
-            transition: all 0.3s;
         }
-        .neon-checkbox:checked { background: #6366f1; border-color: #6366f1; box-shadow: 0 0 8px #6366f1; }
+        .neon-checkbox:checked { background: #6366f1; border-color: #6366f1; }
         .neon-checkbox:checked::after {
             content: '\f00c'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
-            font-size: 8px; color: white; position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
+            font-size: 8px; color: white; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
         }
     </style>
 </head>
 <body>
 
     <div id="loader">
-        <h1 id="loaderTitle" class="text-[10px] font-black uppercase tracking-[0.5em] text-indigo-500 animate-pulse">Initializing Data Stream</h1>
+        <h1 id="loaderTitle" class="text-[10px] font-black uppercase tracking-[0.5em] text-indigo-500 animate-pulse">Initializing Neural Stream</h1>
         <div class="progress-bar-bg"><div id="progressBar"></div></div>
     </div>
 
     <aside id="sidebar">
-        <div class="home-btn"><i class="fa-solid fa-bolt-lightning"></i><span>Live Matrix</span></div>
+        <!-- Switch Button added here -->
+        <div class="p-4 border-b border-neutral-900">
+            <h2 class="text-[8px] font-black text-neutral-500 uppercase tracking-widest mb-2">Payment Category:</h2>
+            <div class="switch-container">
+                <div id="slider" class="switch-slider"></div>
+                <div id="opt-tpp" class="switch-option active" onclick="togglePayment('tpp')">TPP</div>
+                <div id="opt-cash" class="switch-option" onclick="togglePayment('cash')">Cash Payment</div>
+            </div>
+        </div>
 
         <div class="p-4 border-b border-neutral-900">
              <h2 class="text-[8px] font-black text-neutral-500 uppercase tracking-widest mb-3">Patient Matrix:</h2>
              <div class="space-y-2">
                  <label class="flex items-center gap-3 cursor-pointer group">
                      <input type="checkbox" value="Inpatient" checked onchange="handleFilterUpdate()" class="neon-checkbox">
-                     <span class="text-[9px] font-black text-neutral-400 group-hover:text-white transition-colors uppercase tracking-wider">Inpatient</span>
+                     <span class="text-[9px] font-black text-neutral-400 group-hover:text-white uppercase tracking-wider">Inpatient</span>
                  </label>
                  <label class="flex items-center gap-3 cursor-pointer group">
                      <input type="checkbox" value="Outpatient" checked onchange="handleFilterUpdate()" class="neon-checkbox">
-                     <span class="text-[9px] font-black text-neutral-400 group-hover:text-white transition-colors uppercase tracking-wider">Outpatient</span>
+                     <span class="text-[9px] font-black text-neutral-400 group-hover:text-white uppercase tracking-wider">Outpatient</span>
                  </label>
                  <label class="flex items-center gap-3 cursor-pointer group">
                      <input type="checkbox" value="Emergency" checked onchange="handleFilterUpdate()" class="neon-checkbox">
-                     <span class="text-[9px] font-black text-neutral-400 group-hover:text-white transition-colors uppercase tracking-wider">Emergency</span>
+                     <span class="text-[9px] font-black text-neutral-400 group-hover:text-white uppercase tracking-wider">Emergency</span>
                  </label>
              </div>
         </div>
         
-        <div class="p-3 border-b border-neutral-900">
-            <h2 class="text-[8px] font-black text-neutral-500 uppercase tracking-widest mb-2">Time Matrix:</h2>
-            <select id="monthFilter" onchange="handleFilterUpdate()" class="neon-select">
+        <div class="p-4 border-b border-neutral-900">
+            <select id="monthFilter" onchange="handleFilterUpdate()" class="w-full bg-black border border-neutral-800 rounded p-2 text-[10px] font-bold text-indigo-500 uppercase outline-none">
                 <option value="all">Full Cycle</option>
             </select>
         </div>
@@ -113,7 +120,7 @@
                 <h1 class="text-3xl font-black uppercase text-white tracking-tighter">
                     Marketing <span class="text-indigo-500">Intelligence</span>
                 </h1>
-                <p class="text-[10px] text-neutral-500 font-bold uppercase tracking-[0.4em] mt-1">Status: Neural Link Established</p>
+                <p class="text-[10px] text-neutral-500 font-bold uppercase tracking-[0.4em] mt-1">Data Stream: Active</p>
             </div>
             <div class="text-right">
                 <p id="activeDeptLabel" class="text-2xl font-black uppercase tracking-tighter text-indigo-500">GLOBAL VIEW</p>
@@ -122,25 +129,23 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div class="neon-card card-indigo p-8">
-                <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Selected Doctor Count</p>
+                <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Selected Staff</p>
                 <h2 id="totalDoctors" class="text-7xl font-black text-white tracking-tighter">0</h2>
             </div>
             <div class="neon-card card-emerald p-8 lg:col-span-2">
-                <p class="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-4">Bracket Performance Levels</p>
                 <div id="tierStats" class="flex flex-wrap gap-x-12 gap-y-6 text-white">
-                    <div><p class="text-[8px] text-neutral-500 uppercase tracking-widest">Elite</p><p id="tier-1" class="text-3xl font-black">0</p></div>
-                    <div><p class="text-[8px] text-neutral-500 uppercase tracking-widest">High</p><p id="tier-2" class="text-3xl font-black">0</p></div>
-                    <div><p class="text-[8px] text-neutral-500 uppercase tracking-widest">Mid</p><p id="tier-3" class="text-3xl font-black">0</p></div>
-                    <div><p class="text-[8px] text-neutral-500 uppercase tracking-widest">Growth</p><p id="tier-4" class="text-3xl font-black">0</p></div>
-                    <div><p class="text-[8px] text-neutral-500 uppercase tracking-widest">Std</p><p id="tier-5" class="text-3xl font-black">0</p></div>
+                    <div><p class="text-[8px] text-neutral-500 uppercase tracking-widest">Elite (>10M)</p><p id="tier-1" class="text-3xl font-black">0</p></div>
+                    <div><p class="text-[8px] text-neutral-500 uppercase tracking-widest">High (5-10M)</p><p id="tier-2" class="text-3xl font-black">0</p></div>
+                    <div><p class="text-[8px] text-neutral-500 uppercase tracking-widest">Mid (2-5M)</p><p id="tier-3" class="text-3xl font-black">0</p></div>
+                    <div><p class="text-[8px] text-neutral-500 uppercase tracking-widest">Growth (1-2M)</p><p id="tier-4" class="text-3xl font-black">0</p></div>
+                    <div><p class="text-[8px] text-neutral-500 uppercase tracking-widest">Std (<1M)</p><p id="tier-5" class="text-3xl font-black">0</p></div>
                 </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="neon-card card-rose p-6 h-[400px]"><canvas id="revenueChart"></canvas></div>
             <div class="neon-card card-amber p-6 h-[400px] overflow-y-auto">
-                <p class="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-4">Core Revenue Leaderboard</p>
                 <div id="leaderboard" class="space-y-2 text-xs"></div>
             </div>
         </div>
@@ -153,23 +158,19 @@
 
         let masterData = []; 
         let currentDept = 'all';
+        let paymentMode = 'tpp'; // Toggle state
         let prevCounts = { total: 0, t1: 0, t2: 0, t3: 0, t4: 0, t5: 0 };
 
         async function init() {
             let allRows = [], rangeStart = 0, pageSize = 1000;
             const progressBar = document.getElementById('progressBar');
-            const loaderTitle = document.getElementById('loaderTitle');
-
             try {
                 while (true) {
                     const { data, error, count } = await sb.from('doctors').select('*', { count: 'exact' }).range(rangeStart, rangeStart + pageSize - 1);
                     if (error) throw error;
                     if (!data || data.length === 0) break;
                     allRows = [...allRows, ...data];
-                    if (count) {
-                        progressBar.style.width = `${(allRows.length / count) * 100}%`;
-                        loaderTitle.innerText = `LINKING CORE: ${allRows.length} / ${count}`;
-                    }
+                    if (count) progressBar.style.width = `${(allRows.length / count) * 100}%`;
                     if (data.length < pageSize) break;
                     rangeStart += pageSize;
                 }
@@ -177,20 +178,35 @@
                 setupFilters();
                 document.getElementById('loader').style.display = 'none';
                 render();
-            } catch (err) {
-                loaderTitle.innerText = "LINK FAILURE: " + err.message;
-                loaderTitle.style.color = "#f43f5e";
-            }
+            } catch (err) { console.error(err); }
         }
 
-        // --- ANIMATION ENGINE ---
-        function animateValue(id, start, end, duration = 800) {
+        // Logic for Switch
+        function togglePayment(mode) {
+            paymentMode = mode;
+            const slider = document.getElementById('slider');
+            const optTpp = document.getElementById('opt-tpp');
+            const optCash = document.getElementById('opt-cash');
+
+            if (mode === 'tpp') {
+                slider.classList.remove('right');
+                optTpp.classList.add('active');
+                optCash.classList.remove('active');
+            } else {
+                slider.classList.add('right');
+                optCash.classList.add('active');
+                optTpp.classList.remove('active');
+            }
+            render();
+        }
+
+        function animateValue(id, start, end) {
             const obj = document.getElementById(id);
             if (!obj) return;
             let startTimestamp = null;
             const step = (timestamp) => {
                 if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const progress = Math.min((timestamp - startTimestamp) / 800, 1);
                 const current = Math.floor(progress * (end - start) + start);
                 obj.innerText = current.toLocaleString();
                 if (progress < 1) window.requestAnimationFrame(step);
@@ -228,9 +244,19 @@
 
         function render() {
             const selectedMonth = document.getElementById('monthFilter').value;
-            const selectedTypes = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+            const selectedPtTypes = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
             
-            let filtered = masterData.filter(d => selectedTypes.includes(d.patient_type));
+            // Core Filters
+            let filtered = masterData.filter(d => selectedPtTypes.includes(d.patient_type));
+            
+            // Switch Logic using column 'type'
+            if (paymentMode === 'cash') {
+                filtered = filtered.filter(d => d.type === 'Self Pay');
+            } else {
+                const tppArray = ['HMO', 'INSURANCE', 'INDUSTRIAL'];
+                filtered = filtered.filter(d => tppArray.includes(d.type));
+            }
+
             if (currentDept !== 'all') filtered = filtered.filter(d => d.department === currentDept);
             if (selectedMonth !== 'all') filtered = filtered.filter(d => d.month === selectedMonth);
 
@@ -254,14 +280,13 @@
                 if (b) b.count++;
             });
 
-            // UI ANIMATIONS
             animateValue("totalDoctors", prevCounts.total, doctorTotals.length);
             prevCounts.total = doctorTotals.length;
 
             brackets.forEach((b, i) => {
-                const key = `t${i+1}`;
-                animateValue(b.id, prevCounts[key] || 0, b.count);
-                prevCounts[key] = b.count;
+                const k = `t${i+1}`;
+                animateValue(b.id, prevCounts[k] || 0, b.count);
+                prevCounts[k] = b.count;
             });
 
             document.getElementById('activeDeptLabel').innerText = currentDept.toUpperCase();
