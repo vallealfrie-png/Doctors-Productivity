@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doctor Profile | Neural Analytics</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Highcharts Core and Modules -->
     <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/modules/variable-pie.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -15,13 +13,20 @@
         .glass-panel { background: rgba(10, 10, 10, 0.8); border: 1px solid #1a1a1a; border-radius: 12px; }
         .neon-text { color: #6366f1; text-shadow: 0 0 10px rgba(99, 102, 241, 0.5); }
         .chart-container { width: 100%; height: 300px; }
+        select { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 0.5rem center; background-size: 1em; }
     </style>
 </head>
 <body class="p-8">
-    <nav class="mb-12">
+    <nav class="mb-8 flex justify-between items-center">
         <a href="index.html" class="text-[10px] font-black uppercase tracking-[0.3em] text-neutral-500 hover:text-white transition-colors">
             <i class="fa-solid fa-arrow-left mr-2"></i> Back to Matrix
         </a>
+        <div class="flex items-center gap-4">
+            <span class="text-[9px] font-black text-neutral-500 uppercase">Temporal Filter:</span>
+            <select id="monthFilter" onchange="processData()" class="bg-black border border-neutral-800 rounded px-4 py-1 text-[10px] font-bold text-indigo-500 uppercase outline-none cursor-pointer pr-8">
+                <option value="all">Full Cycle</option>
+            </select>
+        </div>
     </nav>
 
     <div id="profileContainer" class="max-w-6xl mx-auto opacity-0 transition-opacity duration-700">
@@ -35,43 +40,39 @@
                 </div>
             </div>
             <div class="text-right">
-                <p class="text-neutral-600 text-[9px] font-black uppercase tracking-widest">System Status</p>
-                <p class="text-emerald-500 text-[10px] font-bold uppercase tracking-widest"><i class="fa-solid fa-circle text-[6px] mr-2 animate-pulse"></i>Node Active</p>
+                <p class="text-neutral-600 text-[9px] font-black uppercase tracking-widest">Revenue Contribution</p>
+                <p id="sharePercent" class="text-3xl font-black text-emerald-500 tracking-tighter">0.00%</p>
             </div>
         </header>
 
-        <!-- Scorecards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <div class="glass-panel p-6 border-l-4 border-l-indigo-600">
-                <p class="text-neutral-500 text-[9px] font-black uppercase tracking-widest mb-1">Cumulative Revenue</p>
-                <h3 id="totalRev" class="text-4xl font-black neon-text">₱0</h3>
+        <!-- Centered Scorecards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
+            <div class="glass-panel p-6 flex flex-col items-center justify-center text-center border-b-2 border-indigo-600">
+                <p class="text-neutral-500 text-[9px] font-black uppercase tracking-widest mb-1">Personal Revenue</p>
+                <h3 id="totalRev" class="text-2xl font-black neon-text">₱0</h3>
             </div>
-            <div class="glass-panel p-6 border-l-4 border-l-emerald-600">
-                <p class="text-neutral-500 text-[9px] font-black uppercase tracking-widest mb-1">Total Patient Visits</p>
-                <h3 id="patientCount" class="text-4xl font-black text-white">0</h3>
+            <div class="glass-panel p-6 flex flex-col items-center justify-center text-center border-b-2 border-emerald-600">
+                <p class="text-neutral-500 text-[9px] font-black uppercase tracking-widest mb-1">Global Revenue</p>
+                <h3 id="globalRev" class="text-2xl font-black text-white">₱0</h3>
             </div>
-            <div class="glass-panel p-6 border-l-4 border-l-rose-600">
+            <div class="glass-panel p-6 flex flex-col items-center justify-center text-center border-b-2 border-rose-600">
+                <p class="text-neutral-500 text-[9px] font-black uppercase tracking-widest mb-1">Patient Count</p>
+                <h3 id="patientCount" class="text-2xl font-black text-white">0</h3>
+            </div>
+            <div class="glass-panel p-6 flex flex-col items-center justify-center text-center border-b-2 border-amber-600">
                 <p class="text-neutral-500 text-[9px] font-black uppercase tracking-widest mb-1">Primary Payor</p>
-                <h3 id="topPayor" class="text-4xl font-black text-white">-</h3>
+                <h3 id="topPayor" class="text-2xl font-black text-white">-</h3>
             </div>
         </div>
 
         <!-- Charts Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Monthly Performance -->
             <div class="glass-panel p-6">
                 <div id="monthlyChart" class="chart-container"></div>
             </div>
-
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <!-- Patient Type -->
-                <div class="glass-panel p-4">
-                    <div id="patientTypeChart" class="chart-container"></div>
-                </div>
-                <!-- Payor Mix -->
-                <div class="glass-panel p-4">
-                    <div id="payorMixChart" class="chart-container"></div>
-                </div>
+                <div class="glass-panel p-4"><div id="patientTypeChart" class="chart-container"></div></div>
+                <div class="glass-panel p-4"><div id="payorMixChart" class="chart-container"></div></div>
             </div>
         </div>
     </div>
@@ -81,6 +82,10 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxbG1heGxhYmZkdmFuc3FqdWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDgxODAsImV4cCI6MjA5MzAyNDE4MH0.IdiyhRSxoEGguocFAJJyfugyFfLUvQ_IR58-8gSH48U';
         const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        let doctorAllData = [];
+        let globalAllData = [];
+        let doctorName = "";
+
         // Global Highcharts Dark Theme
         Highcharts.setOptions({
             chart: { backgroundColor: 'transparent', style: { fontFamily: 'Inter' } },
@@ -89,84 +94,101 @@
             tooltip: { backgroundColor: '#000', style: { color: '#fff' }, borderWidth: 1, borderColor: '#333' }
         });
 
-        async function loadProfile() {
+        async function init() {
             const params = new URLSearchParams(window.location.search);
-            const name = params.get('name');
-            if (!name) return;
+            doctorName = params.get('name');
+            if (!doctorName) return;
 
-            const { data, error } = await sb.from('doctors').select('*').eq('doctor', name);
-            if (error || !data.length) return;
+            // 1. Fetch Doctor Data
+            const docRes = await sb.from('doctors').select('*').eq('doctor', doctorName);
+            doctorAllData = docRes.data;
 
-            // Calculations
-            const totalRev = data.reduce((sum, row) => sum + (parseFloat(row.revenue) || 0), 0);
-            
-            const monthlyData = {};
-            data.forEach(r => { monthlyData[r.month] = (monthlyData[r.month] || 0) + parseFloat(r.revenue); });
+            // 2. Fetch Global Data (only revenue and month for efficiency)
+            const globalRes = await sb.from('doctors').select('revenue, month, type, patient_type');
+            globalAllData = globalRes.data;
 
-            const ptTypes = { 'Inpatient': 0, 'Outpatient': 0, 'Emergency': 0 };
-            data.forEach(r => { if(ptTypes.hasOwnProperty(r.patient_type)) ptTypes[r.patient_type]++; });
-
-            const payorMix = {};
-            data.forEach(r => { payorMix[r.type] = (payorMix[r.type] || 0) + 1; });
-            const topPayorName = Object.keys(payorMix).reduce((a, b) => payorMix[a] > payorMix[b] ? a : b);
-
-            // Update UI
-            document.getElementById('docName').innerText = name;
-            document.getElementById('docDept').innerText = data[0].department || 'General';
-            document.getElementById('totalRev').innerText = `₱${Math.round(totalRev).toLocaleString()}`;
-            document.getElementById('patientCount').innerText = data.length.toLocaleString();
-            document.getElementById('topPayor').innerText = topPayorName;
-
-            renderHighcharts(monthlyData, ptTypes, payorMix);
+            setupMonthFilter();
+            processData();
             document.getElementById('profileContainer').classList.remove('opacity-0');
         }
 
-        function renderHighcharts(monthly, patients, payors) {
-            // Monthly Bar
+        function setupMonthFilter() {
+            const months = [...new Set(globalAllData.map(d => d.month))].filter(Boolean);
+            const select = document.getElementById('monthFilter');
+            months.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m; opt.textContent = m;
+                select.appendChild(opt);
+            });
+        }
+
+        function processData() {
+            const filterMonth = document.getElementById('monthFilter').value;
+
+            // Filter Doctor Data
+            let docFiltered = doctorAllData;
+            if (filterMonth !== 'all') docFiltered = docFiltered.filter(d => d.month === filterMonth);
+
+            // Filter Global Data
+            let globalFiltered = globalAllData;
+            if (filterMonth !== 'all') globalFiltered = globalFiltered.filter(d => d.month === filterMonth);
+
+            // 1. Calculations
+            const personalRevenue = docFiltered.reduce((sum, r) => sum + (parseFloat(r.revenue) || 0), 0);
+            const globalRevenue = globalFiltered.reduce((sum, r) => sum + (parseFloat(r.revenue) || 0), 0);
+            const sharePercent = globalRevenue > 0 ? (personalRevenue / globalRevenue) * 100 : 0;
+
+            // 2. Aggregations for Charts
+            const monthlySeries = {};
+            docFiltered.forEach(r => { monthlySeries[r.month] = (monthlySeries[r.month] || 0) + parseFloat(r.revenue); });
+
+            const ptTypes = { 'Inpatient': 0, 'Outpatient': 0, 'Emergency': 0 };
+            docFiltered.forEach(r => { if(ptTypes.hasOwnProperty(r.patient_type)) ptTypes[r.patient_type]++; });
+
+            const payors = {};
+            docFiltered.forEach(r => { payors[r.type] = (payors[r.type] || 0) + 1; });
+            const topPayorName = Object.keys(payors).length > 0 ? Object.keys(payors).reduce((a, b) => payors[a] > payors[b] ? a : b) : "-";
+
+            // 3. UI Update
+            document.getElementById('docName').innerText = doctorName;
+            document.getElementById('docDept').innerText = docFiltered[0]?.department || 'General';
+            document.getElementById('totalRev').innerText = `₱${Math.round(personalRevenue).toLocaleString()}`;
+            document.getElementById('globalRev').innerText = `₱${Math.round(globalRevenue).toLocaleString()}`;
+            document.getElementById('patientCount').innerText = docFiltered.length.toLocaleString();
+            document.getElementById('topPayor').innerText = topPayorName;
+            document.getElementById('sharePercent').innerText = `${sharePercent.toFixed(2)}%`;
+
+            renderCharts(monthlySeries, ptTypes, payors);
+        }
+
+        function renderCharts(monthly, patients, payors) {
             Highcharts.chart('monthlyChart', {
                 chart: { type: 'column' },
-                title: { text: 'Monthly Revenue Performance', align: 'left' },
+                title: { text: 'Monthly Performance', align: 'left' },
                 xAxis: { categories: Object.keys(monthly), labels: { style: { color: '#888' } } },
                 yAxis: { title: { text: null }, gridLineColor: '#1a1a1a', labels: { style: { color: '#444' } } },
-                series: [{
-                    name: 'Revenue',
-                    data: Object.values(monthly),
-                    color: '#6366f1',
-                    borderRadius: 5
-                }],
+                series: [{ name: 'Revenue', data: Object.values(monthly), color: '#6366f1', borderRadius: 5 }],
                 legend: { enabled: false }
             });
 
-            // Patient Type Pie
             Highcharts.chart('patientTypeChart', {
                 chart: { type: 'pie' },
-                title: { text: 'Patient Distribution' },
+                title: { text: 'Patient Dist.' },
                 plotOptions: { pie: { borderWidth: 0, dataLabels: { enabled: false }, showInLegend: true } },
-                series: [{
-                    name: 'Visits',
-                    colorByPoint: true,
-                    data: Object.entries(patients).map(([name, y]) => ({ name, y })),
-                    colors: ['#6366f1', '#10b981', '#f43f5e']
-                }],
-                legend: { itemStyle: { color: '#888', fontSize: '9px' } }
+                series: [{ name: 'Visits', data: Object.entries(patients).map(([name, y]) => ({ name, y })), colors: ['#6366f1', '#10b981', '#f43f5e'] }],
+                legend: { itemStyle: { color: '#888', fontSize: '8px' } }
             });
 
-            // Payor Mix Doughnut
             Highcharts.chart('payorMixChart', {
                 chart: { type: 'pie' },
                 title: { text: 'Payor Mix' },
                 plotOptions: { pie: { innerSize: '70%', borderWidth: 0, dataLabels: { enabled: false }, showInLegend: true } },
-                series: [{
-                    name: 'Count',
-                    colorByPoint: true,
-                    data: Object.entries(payors).map(([name, y]) => ({ name, y })),
-                    colors: ['#8b5cf6', '#f59e0b', '#3b82f6', '#ec4899']
-                }],
-                legend: { itemStyle: { color: '#888', fontSize: '9px' } }
+                series: [{ name: 'Count', data: Object.entries(payors).map(([name, y]) => ({ name, y })), colors: ['#8b5cf6', '#f59e0b', '#3b82f6', '#ec4899'] }],
+                legend: { itemStyle: { color: '#888', fontSize: '8px' } }
             });
         }
 
-        loadProfile();
+        init();
     </script>
 </body>
 </html>
