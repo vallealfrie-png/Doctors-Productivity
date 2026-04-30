@@ -15,7 +15,7 @@
         
         body { background-color: #010101; color: #e5e5e5; display: flex; height: 100vh; overflow: hidden; font-family: 'Inter', sans-serif; }
         
-        /* Sidebar & Navigation */
+        /* Sidebar */
         #sidebar { width: 240px; border-right: 1px solid #1a1a1a; background: #050505; display: flex; flex-direction: column; flex-shrink: 0; z-index: 50;}
         #deptList { flex-grow: 1; overflow-y: auto; scrollbar-width: none; padding: 12px; }
         
@@ -28,7 +28,7 @@
         .dept-btn:hover { color: #888; border-color: #333; }
         .dept-btn.active { color: #fff; border-color: #6366f1; background: #0c0c1e; border-left: 3px solid #6366f1; }
 
-        /* Neural Toggle Switch */
+        /* Payment Switch */
         .switch-container {
             display: flex; background: #000; border: 1px solid #1a1a1a;
             border-radius: 8px; padding: 2px; margin-top: 8px; position: relative;
@@ -48,7 +48,7 @@
         .pos-tpp { transform: translateX(100%); }
         .pos-cash { transform: translateX(200%); }
 
-        /* Interactive Tier Trigger */
+        /* Tier Triggers */
         .tier-trigger {
             cursor: pointer; padding: 10px; border-radius: 8px; border: 1px solid transparent;
             transition: all 0.3s ease; min-width: 90px;
@@ -59,7 +59,7 @@
             box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
         }
 
-        /* Neon Card Styling */
+        /* Neon Cards */
         .neon-card { border: 2px solid transparent; border-radius: 12px; animation: spin 4s infinite linear; position: relative; }
         .card-indigo { background: linear-gradient(#080808, #080808) padding-box, conic-gradient(from var(--bg-angle), #6366f1, #1e1b4b, #6366f1) border-box; }
         .card-emerald { background: linear-gradient(#080808, #080808) padding-box, conic-gradient(from var(--bg-angle), #10b981, #064e3b, #10b981) border-box; }
@@ -84,13 +84,11 @@
 </head>
 <body>
 
-    <!-- Loading Screen -->
     <div id="loader">
-        <h1 id="loaderTitle" class="text-[10px] font-black uppercase tracking-[0.5em] text-indigo-500 animate-pulse">Initializing Neural Link</h1>
+        <h1 class="text-[10px] font-black uppercase tracking-[0.5em] text-indigo-500 animate-pulse">Initializing Neural Link</h1>
         <div class="progress-bar-bg"><div id="progressBar"></div></div>
     </div>
 
-    <!-- Navigation Sidebar -->
     <aside id="sidebar">
         <div class="p-4 border-b border-neutral-900">
             <h2 class="text-[8px] font-black text-neutral-500 uppercase tracking-widest">Payment Matrix:</h2>
@@ -107,15 +105,15 @@
              <div class="space-y-2">
                  <label class="flex items-center gap-3 cursor-pointer group">
                      <input type="checkbox" value="Inpatient" checked onchange="handleFilterUpdate()" class="neon-checkbox">
-                     <span class="text-[9px] font-black text-neutral-400 group-hover:text-white uppercase tracking-wider">Inpatient</span>
+                     <span class="text-[9px] font-black text-neutral-400 uppercase tracking-wider">Inpatient</span>
                  </label>
                  <label class="flex items-center gap-3 cursor-pointer group">
                      <input type="checkbox" value="Outpatient" checked onchange="handleFilterUpdate()" class="neon-checkbox">
-                     <span class="text-[9px] font-black text-neutral-400 group-hover:text-white uppercase tracking-wider">Outpatient</span>
+                     <span class="text-[9px] font-black text-neutral-400 uppercase tracking-wider">Outpatient</span>
                  </label>
                  <label class="flex items-center gap-3 cursor-pointer group">
                      <input type="checkbox" value="Emergency" checked onchange="handleFilterUpdate()" class="neon-checkbox">
-                     <span class="text-[9px] font-black text-neutral-400 group-hover:text-white uppercase tracking-wider">Emergency</span>
+                     <span class="text-[9px] font-black text-neutral-400 uppercase tracking-wider">Emergency</span>
                  </label>
              </div>
         </div>
@@ -131,54 +129,46 @@
         </div>
     </aside>
 
-    <!-- Main Content Area -->
     <main>
         <header class="flex justify-between items-start mb-8">
             <div>
-                <h1 class="text-3xl font-black uppercase text-white tracking-tighter">
-                    Marketing <span class="text-indigo-500">Intelligence</span>
-                </h1>
+                <h1 class="text-3xl font-black uppercase text-white tracking-tighter">Marketing <span class="text-indigo-500">Intelligence</span></h1>
                 <p class="text-[10px] text-neutral-500 font-bold uppercase tracking-[0.4em] mt-1">Live Feed: Node Synchronized</p>
             </div>
-            <div class="text-right">
-                <p id="activeDeptLabel" class="text-2xl font-black uppercase tracking-tighter text-indigo-500">GLOBAL VIEW</p>
-            </div>
+            <p id="activeDeptLabel" class="text-2xl font-black uppercase tracking-tighter text-indigo-500">GLOBAL VIEW</p>
         </header>
 
-        <!-- Stats Section -->
+        <!-- Centered Stats Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
-            <!-- Global Revenue -->
-            <div class="neon-card card-indigo p-6">
+            <div class="neon-card card-indigo p-6 flex flex-col items-center justify-center text-center">
                 <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Aggregate Revenue</p>
                 <h2 id="globalRevenue" class="text-3xl font-black text-white tracking-tighter mt-2">₱0</h2>
             </div>
             
-            <!-- Personnel Count -->
-            <div class="neon-card card-indigo p-6">
+            <div class="neon-card card-indigo p-6 flex flex-col items-center justify-center text-center">
                 <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Active Headcount</p>
                 <h2 id="totalDoctors" class="text-3xl font-black text-white tracking-tighter mt-2">0</h2>
             </div>
 
-            <!-- Tier Distribution -->
-            <div class="neon-card card-emerald p-6 lg:col-span-2">
-                <div id="tierStats" class="flex flex-wrap gap-x-2 text-white justify-between">
-                    <div id="tier-1-card" class="tier-trigger" onclick="toggleTierFilter(1)">
+            <div class="neon-card card-emerald p-6 lg:col-span-2 flex items-center">
+                <div id="tierStats" class="flex flex-wrap gap-x-2 text-white justify-between items-center w-full">
+                    <div id="tier-1-card" class="tier-trigger text-center" onclick="toggleTierFilter(1)">
                         <p class="text-[7px] text-neutral-500 uppercase tracking-widest">Elite (>10M)</p>
                         <p id="tier-1" class="text-xl font-black">0</p>
                     </div>
-                    <div id="tier-2-card" class="tier-trigger" onclick="toggleTierFilter(2)">
+                    <div id="tier-2-card" class="tier-trigger text-center" onclick="toggleTierFilter(2)">
                         <p class="text-[7px] text-neutral-500 uppercase tracking-widest">High (5-10M)</p>
                         <p id="tier-2" class="text-xl font-black">0</p>
                     </div>
-                    <div id="tier-3-card" class="tier-trigger" onclick="toggleTierFilter(3)">
+                    <div id="tier-3-card" class="tier-trigger text-center" onclick="toggleTierFilter(3)">
                         <p class="text-[7px] text-neutral-500 uppercase tracking-widest">Mid (2-5M)</p>
                         <p id="tier-3" class="text-xl font-black">0</p>
                     </div>
-                    <div id="tier-4-card" class="tier-trigger" onclick="toggleTierFilter(4)">
+                    <div id="tier-4-card" class="tier-trigger text-center" onclick="toggleTierFilter(4)">
                         <p class="text-[7px] text-neutral-500 uppercase tracking-widest">Growth (1-2M)</p>
                         <p id="tier-4" class="text-xl font-black">0</p>
                     </div>
-                    <div id="tier-5-card" class="tier-trigger" onclick="toggleTierFilter(5)">
+                    <div id="tier-5-card" class="tier-trigger text-center" onclick="toggleTierFilter(5)">
                         <p class="text-[7px] text-neutral-500 uppercase tracking-widest">Std (<1M)</p>
                         <p id="tier-5" class="text-xl font-black">0</p>
                     </div>
@@ -186,7 +176,6 @@
             </div>
         </div>
 
-        <!-- Chart and Leaderboard -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="neon-card card-rose p-6 h-[450px]"><canvas id="revenueChart"></canvas></div>
             <div class="neon-card card-amber p-6 h-[450px] overflow-y-auto">
@@ -229,8 +218,7 @@
 
         function togglePayment(mode) {
             paymentMode = mode;
-            const slider = document.getElementById('slider');
-            slider.className = 'switch-slider pos-' + mode;
+            document.getElementById('slider').className = 'switch-slider pos-' + mode;
             ['all', 'tpp', 'cash'].forEach(opt => document.getElementById('opt-' + opt).classList.toggle('active', opt === mode));
             render();
         }
@@ -250,15 +238,15 @@
         function animateValue(id, start, end, isCurrency = false) {
             const obj = document.getElementById(id);
             if (!obj) return;
-            let startTimestamp = null;
+            let startTime = null;
             const step = (timestamp) => {
-                if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / 800, 1);
+                if (!startTime) startTime = timestamp;
+                const progress = Math.min((timestamp - startTime) / 800, 1);
                 const current = Math.floor(progress * (end - start) + start);
                 obj.innerText = isCurrency ? `₱${current.toLocaleString()}` : current.toLocaleString();
-                if (progress < 1) window.requestAnimationFrame(step);
+                if (progress < 1) requestAnimationFrame(step);
             };
-            window.requestAnimationFrame(step);
+            requestAnimationFrame(step);
         }
 
         function setupFilters() {
@@ -301,25 +289,23 @@
             if (currentDept !== 'all') filtered = filtered.filter(d => d.department === currentDept);
             if (selectedMonth !== 'all') filtered = filtered.filter(d => d.month === selectedMonth);
 
-            // Calculate Global Revenue for the current filter
             const globalTotal = filtered.reduce((sum, r) => sum + (parseFloat(r.revenue) || 0), 0);
-
             const agg = {};
             filtered.forEach(r => { agg[r.doctor] = (agg[r.doctor] || 0) + (parseFloat(r.revenue) || 0); });
 
             let doctorTotals = Object.keys(agg).map(name => ({ name, revenue: agg[name] }));
 
             const brackets = [
-                { id: 'tier-1', min: 10000000, max: Infinity, count: 0 },
-                { id: 'tier-2', min: 5000000, max: 10000000, count: 0 },
-                { id: 'tier-3', min: 2000000, max: 5000000, count: 0 },
-                { id: 'tier-4', min: 1000000, max: 2000000, count: 0 },
-                { id: 'tier-5', min: -Infinity, max: 1000000, count: 0 }
+                { min: 10000000, max: Infinity, count: 0 },
+                { min: 5000000, max: 10000000, count: 0 },
+                { min: 2000000, max: 5000000, count: 0 },
+                { min: 1000000, max: 2000000, count: 0 },
+                { min: -Infinity, max: 1000000, count: 0 }
             ];
 
             doctorTotals.forEach(doc => {
-                const b = brackets.find(b => doc.revenue > b.min && doc.revenue <= b.max);
-                if (b) b.count++;
+                const idx = brackets.findIndex(b => doc.revenue > b.min && doc.revenue <= b.max);
+                if (idx !== -1) brackets[idx].count++;
             });
 
             if (activeTier !== null) {
@@ -329,12 +315,10 @@
 
             doctorTotals.sort((a, b) => b.revenue - a.revenue);
 
-            // Update Animations
             animateValue("globalRevenue", prevCounts.revenue, globalTotal, true);
             animateValue("totalDoctors", prevCounts.total, doctorTotals.length);
-            brackets.forEach((b, i) => animateValue(b.id, prevCounts[`t${i+1}`] || 0, b.count));
+            brackets.forEach((b, i) => animateValue(`tier-${i+1}`, prevCounts[`t${i+1}`] || 0, b.count));
 
-            // Sync Previous Counts
             prevCounts.revenue = globalTotal;
             prevCounts.total = doctorTotals.length;
             brackets.forEach((b, i) => prevCounts[`t${i+1}`] = b.count);
@@ -374,7 +358,6 @@
                 }
             });
         }
-
         init();
     </script>
 </body>
