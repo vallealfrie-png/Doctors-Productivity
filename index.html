@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marketing Intelligence - Neural Switch V2</title>
+    <title>Marketing Intelligence - Interactive Tiers</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -27,7 +27,7 @@
         .dept-btn:hover { color: #888; border-color: #333; }
         .dept-btn.active { color: #fff; border-color: #6366f1; background: #0c0c1e; border-left: 3px solid #6366f1; }
 
-        /* Enhanced Neural Toggle Switch */
+        /* Neural Toggle Switch */
         .switch-container {
             display: flex; background: #000; border: 1px solid #1a1a1a;
             border-radius: 8px; padding: 2px; margin-top: 8px; position: relative;
@@ -43,10 +43,20 @@
             background: #6366f1; border-radius: 6px; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
         }
-        /* Slider Positions for 3 states */
         .pos-all { transform: translateX(0%); }
         .pos-tpp { transform: translateX(100%); }
         .pos-cash { transform: translateX(200%); }
+
+        /* Interactive Tier Cards */
+        .tier-trigger {
+            cursor: pointer; padding: 10px; border-radius: 8px; border: 1px solid transparent;
+            transition: all 0.3s ease; min-width: 100px;
+        }
+        .tier-trigger:hover { background: rgba(255,255,255,0.05); }
+        .tier-trigger.active {
+            background: rgba(99, 102, 241, 0.1); border-color: #6366f1;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
+        }
 
         .neon-card { border: 2px solid transparent; border-radius: 12px; animation: spin 4s infinite linear; position: relative; }
         .card-indigo { background: linear-gradient(#080808, #080808) padding-box, conic-gradient(from var(--bg-angle), #6366f1, #1e1b4b, #6366f1) border-box; }
@@ -73,12 +83,11 @@
 <body>
 
     <div id="loader">
-        <h1 id="loaderTitle" class="text-[10px] font-black uppercase tracking-[0.5em] text-indigo-500 animate-pulse">Synchronizing Data Tunnels</h1>
+        <h1 id="loaderTitle" class="text-[10px] font-black uppercase tracking-[0.5em] text-indigo-500 animate-pulse">Filtering Neural Pathways</h1>
         <div class="progress-bar-bg"><div id="progressBar"></div></div>
     </div>
 
     <aside id="sidebar">
-        <!-- Expanded 3-Way Switch -->
         <div class="p-4 border-b border-neutral-900">
             <h2 class="text-[8px] font-black text-neutral-500 uppercase tracking-widest">Payment Matrix:</h2>
             <div class="switch-container">
@@ -124,7 +133,7 @@
                 <h1 class="text-3xl font-black uppercase text-white tracking-tighter">
                     Marketing <span class="text-indigo-500">Intelligence</span>
                 </h1>
-                <p class="text-[10px] text-neutral-500 font-bold uppercase tracking-[0.4em] mt-1">Live Feed: Synchronized</p>
+                <p class="text-[10px] text-neutral-500 font-bold uppercase tracking-[0.4em] mt-1">Matrix Active: Select Tier to Filter</p>
             </div>
             <div class="text-right">
                 <p id="activeDeptLabel" class="text-2xl font-black uppercase tracking-tighter text-indigo-500">GLOBAL VIEW</p>
@@ -133,16 +142,31 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div class="neon-card card-indigo p-8">
-                <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Selected Entities</p>
+                <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Active Headcount</p>
                 <h2 id="totalDoctors" class="text-7xl font-black text-white tracking-tighter">0</h2>
             </div>
             <div class="neon-card card-emerald p-8 lg:col-span-2">
-                <div id="tierStats" class="flex flex-wrap gap-x-12 gap-y-6 text-white">
-                    <div><p class="text-[8px] text-neutral-500 uppercase tracking-widest">Elite (>10M)</p><p id="tier-1" class="text-3xl font-black">0</p></div>
-                    <div><p class="text-[8px] text-neutral-500 uppercase tracking-widest">High (5-10M)</p><p id="tier-2" class="text-3xl font-black">0</p></div>
-                    <div><p class="text-[8px] text-neutral-500 uppercase tracking-widest">Mid (2-5M)</p><p id="tier-3" class="text-3xl font-black">0</p></div>
-                    <div><p class="text-[8px] text-neutral-500 uppercase tracking-widest">Growth (1-2M)</p><p id="tier-4" class="text-3xl font-black">0</p></div>
-                    <div><p class="text-[8px] text-neutral-500 uppercase tracking-widest">Std (<1M)</p><p id="tier-5" class="text-3xl font-black">0</p></div>
+                <div id="tierStats" class="flex flex-wrap gap-x-4 gap-y-6 text-white justify-between">
+                    <div id="tier-1-card" class="tier-trigger" onclick="toggleTierFilter(1)">
+                        <p class="text-[8px] text-neutral-500 uppercase tracking-widest">Elite (>10M)</p>
+                        <p id="tier-1" class="text-3xl font-black">0</p>
+                    </div>
+                    <div id="tier-2-card" class="tier-trigger" onclick="toggleTierFilter(2)">
+                        <p class="text-[8px] text-neutral-500 uppercase tracking-widest">High (5-10M)</p>
+                        <p id="tier-2" class="text-3xl font-black">0</p>
+                    </div>
+                    <div id="tier-3-card" class="tier-trigger" onclick="toggleTierFilter(3)">
+                        <p class="text-[8px] text-neutral-500 uppercase tracking-widest">Mid (2-5M)</p>
+                        <p id="tier-3" class="text-3xl font-black">0</p>
+                    </div>
+                    <div id="tier-4-card" class="tier-trigger" onclick="toggleTierFilter(4)">
+                        <p class="text-[8px] text-neutral-500 uppercase tracking-widest">Growth (1-2M)</p>
+                        <p id="tier-4" class="text-3xl font-black">0</p>
+                    </div>
+                    <div id="tier-5-card" class="tier-trigger" onclick="toggleTierFilter(5)">
+                        <p class="text-[8px] text-neutral-500 uppercase tracking-widest">Std (<1M)</p>
+                        <p id="tier-5" class="text-3xl font-black">0</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -163,6 +187,7 @@
         let masterData = []; 
         let currentDept = 'all';
         let paymentMode = 'all'; 
+        let activeTier = null; // Filter state for tiers
         let prevCounts = { total: 0, t1: 0, t2: 0, t3: 0, t4: 0, t5: 0 };
 
         async function init() {
@@ -185,18 +210,26 @@
             } catch (err) { console.error(err); }
         }
 
-        // Logic for 3-Way Switch
         function togglePayment(mode) {
             paymentMode = mode;
             const slider = document.getElementById('slider');
             const options = ['all', 'tpp', 'cash'];
-            
-            // UI State Update
-            slider.className = 'switch-slider ' + 'pos-' + mode;
-            options.forEach(opt => {
-                document.getElementById('opt-' + opt).classList.toggle('active', opt === mode);
-            });
+            slider.className = 'switch-slider pos-' + mode;
+            options.forEach(opt => document.getElementById('opt-' + opt).classList.toggle('active', opt === mode));
+            render();
+        }
 
+        // --- Tier Selection Logic ---
+        function toggleTierFilter(tier) {
+            const cardId = `tier-${tier}-card`;
+            if (activeTier === tier) {
+                activeTier = null;
+                document.getElementById(cardId).classList.remove('active');
+            } else {
+                if (activeTier) document.getElementById(`tier-${activeTier}-card`).classList.remove('active');
+                activeTier = tier;
+                document.getElementById(cardId).classList.add('active');
+            }
             render();
         }
 
@@ -248,14 +281,12 @@
             
             let filtered = masterData.filter(d => selectedPtTypes.includes(d.patient_type));
             
-            // Logic for 3-way Filter
             if (paymentMode === 'cash') {
                 filtered = filtered.filter(d => d.type === 'Self Pay');
             } else if (paymentMode === 'tpp') {
                 const tppArray = ['HMO', 'INSURANCE', 'INDUSTRIAL'];
                 filtered = filtered.filter(d => tppArray.includes(d.type));
             }
-            // If paymentMode === 'all', no filtering applied to 'type' column
 
             if (currentDept !== 'all') filtered = filtered.filter(d => d.department === currentDept);
             if (selectedMonth !== 'all') filtered = filtered.filter(d => d.month === selectedMonth);
@@ -265,8 +296,9 @@
                 agg[r.doctor] = (agg[r.doctor] || 0) + (parseFloat(r.revenue) || 0);
             });
 
-            const doctorTotals = Object.keys(agg).map(name => ({ name, revenue: agg[name] })).sort((a, b) => b.revenue - a.revenue);
+            let doctorTotals = Object.keys(agg).map(name => ({ name, revenue: agg[name] }));
 
+            // Brackets definition
             const brackets = [
                 { id: 'tier-1', min: 10000000, max: Infinity, count: 0 },
                 { id: 'tier-2', min: 5000000, max: 10000000, count: 0 },
@@ -275,11 +307,21 @@
                 { id: 'tier-5', min: -Infinity, max: 1000000, count: 0 }
             ];
 
+            // Count for tiers (before tier filtering)
             doctorTotals.forEach(doc => {
                 const b = brackets.find(b => doc.revenue > b.min && doc.revenue <= b.max);
                 if (b) b.count++;
             });
 
+            // Apply Tier Filter if one is selected
+            if (activeTier !== null) {
+                const selectedBracket = brackets[activeTier - 1];
+                doctorTotals = doctorTotals.filter(doc => doc.revenue > selectedBracket.min && doc.revenue <= selectedBracket.max);
+            }
+
+            doctorTotals.sort((a, b) => b.revenue - a.revenue);
+
+            // UI Animations
             animateValue("totalDoctors", prevCounts.total, doctorTotals.length);
             prevCounts.total = doctorTotals.length;
 
