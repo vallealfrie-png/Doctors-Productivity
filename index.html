@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marketing Intelligence - Neural Switch</title>
+    <title>Marketing Intelligence - Neural Switch V2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -15,7 +15,7 @@
         
         body { background-color: #010101; color: #e5e5e5; display: flex; height: 100vh; overflow: hidden; font-family: 'Inter', sans-serif; }
         
-        #sidebar { width: 220px; border-right: 1px solid #1a1a1a; background: #050505; display: flex; flex-direction: column; flex-shrink: 0; z-index: 50;}
+        #sidebar { width: 240px; border-right: 1px solid #1a1a1a; background: #050505; display: flex; flex-direction: column; flex-shrink: 0; z-index: 50;}
         #deptList { flex-grow: 1; overflow-y: auto; scrollbar-width: none; padding: 12px; }
         
         .dept-btn {
@@ -27,23 +27,26 @@
         .dept-btn:hover { color: #888; border-color: #333; }
         .dept-btn.active { color: #fff; border-color: #6366f1; background: #0c0c1e; border-left: 3px solid #6366f1; }
 
-        /* Neural Toggle Switch */
+        /* Enhanced Neural Toggle Switch */
         .switch-container {
             display: flex; background: #000; border: 1px solid #1a1a1a;
-            border-radius: 8px; padding: 2px; margin: 10px; position: relative;
+            border-radius: 8px; padding: 2px; margin-top: 8px; position: relative;
         }
         .switch-option {
-            flex: 1; text-align: center; font-size: 8px; font-weight: 900;
-            padding: 8px 0; cursor: pointer; z-index: 2; transition: color 0.3s;
+            flex: 1; text-align: center; font-size: 10px; font-weight: 900;
+            padding: 10px 0; cursor: pointer; z-index: 2; transition: color 0.3s;
             text-transform: uppercase; letter-spacing: 1px; color: #444;
         }
         .switch-option.active { color: #fff; }
         .switch-slider {
-            position: absolute; width: calc(50% - 2px); height: calc(100% - 4px);
-            background: #6366f1; border-radius: 6px; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+            position: absolute; width: calc(33.33% - 2px); height: calc(100% - 4px);
+            background: #6366f1; border-radius: 6px; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
         }
-        .switch-slider.right { transform: translateX(100%); }
+        /* Slider Positions for 3 states */
+        .pos-all { transform: translateX(0%); }
+        .pos-tpp { transform: translateX(100%); }
+        .pos-cash { transform: translateX(200%); }
 
         .neon-card { border: 2px solid transparent; border-radius: 12px; animation: spin 4s infinite linear; position: relative; }
         .card-indigo { background: linear-gradient(#080808, #080808) padding-box, conic-gradient(from var(--bg-angle), #6366f1, #1e1b4b, #6366f1) border-box; }
@@ -70,23 +73,24 @@
 <body>
 
     <div id="loader">
-        <h1 id="loaderTitle" class="text-[10px] font-black uppercase tracking-[0.5em] text-indigo-500 animate-pulse">Initializing Neural Stream</h1>
+        <h1 id="loaderTitle" class="text-[10px] font-black uppercase tracking-[0.5em] text-indigo-500 animate-pulse">Synchronizing Data Tunnels</h1>
         <div class="progress-bar-bg"><div id="progressBar"></div></div>
     </div>
 
     <aside id="sidebar">
-        <!-- Switch Button added here -->
+        <!-- Expanded 3-Way Switch -->
         <div class="p-4 border-b border-neutral-900">
-            <h2 class="text-[8px] font-black text-neutral-500 uppercase tracking-widest mb-2">Payment Category:</h2>
+            <h2 class="text-[8px] font-black text-neutral-500 uppercase tracking-widest">Payment Matrix:</h2>
             <div class="switch-container">
-                <div id="slider" class="switch-slider"></div>
-                <div id="opt-tpp" class="switch-option active" onclick="togglePayment('tpp')">TPP</div>
-                <div id="opt-cash" class="switch-option" onclick="togglePayment('cash')">Cash Payment</div>
+                <div id="slider" class="switch-slider pos-all"></div>
+                <div id="opt-all" class="switch-option active" onclick="togglePayment('all')">All</div>
+                <div id="opt-tpp" class="switch-option" onclick="togglePayment('tpp')">TPP</div>
+                <div id="opt-cash" class="switch-option" onclick="togglePayment('cash')">Cash</div>
             </div>
         </div>
 
         <div class="p-4 border-b border-neutral-900">
-             <h2 class="text-[8px] font-black text-neutral-500 uppercase tracking-widest mb-3">Patient Matrix:</h2>
+             <h2 class="text-[8px] font-black text-neutral-500 uppercase tracking-widest mb-3">Patient Class:</h2>
              <div class="space-y-2">
                  <label class="flex items-center gap-3 cursor-pointer group">
                      <input type="checkbox" value="Inpatient" checked onchange="handleFilterUpdate()" class="neon-checkbox">
@@ -120,7 +124,7 @@
                 <h1 class="text-3xl font-black uppercase text-white tracking-tighter">
                     Marketing <span class="text-indigo-500">Intelligence</span>
                 </h1>
-                <p class="text-[10px] text-neutral-500 font-bold uppercase tracking-[0.4em] mt-1">Data Stream: Active</p>
+                <p class="text-[10px] text-neutral-500 font-bold uppercase tracking-[0.4em] mt-1">Live Feed: Synchronized</p>
             </div>
             <div class="text-right">
                 <p id="activeDeptLabel" class="text-2xl font-black uppercase tracking-tighter text-indigo-500">GLOBAL VIEW</p>
@@ -129,7 +133,7 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div class="neon-card card-indigo p-8">
-                <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Selected Staff</p>
+                <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Selected Entities</p>
                 <h2 id="totalDoctors" class="text-7xl font-black text-white tracking-tighter">0</h2>
             </div>
             <div class="neon-card card-emerald p-8 lg:col-span-2">
@@ -158,7 +162,7 @@
 
         let masterData = []; 
         let currentDept = 'all';
-        let paymentMode = 'tpp'; // Toggle state
+        let paymentMode = 'all'; 
         let prevCounts = { total: 0, t1: 0, t2: 0, t3: 0, t4: 0, t5: 0 };
 
         async function init() {
@@ -181,22 +185,18 @@
             } catch (err) { console.error(err); }
         }
 
-        // Logic for Switch
+        // Logic for 3-Way Switch
         function togglePayment(mode) {
             paymentMode = mode;
             const slider = document.getElementById('slider');
-            const optTpp = document.getElementById('opt-tpp');
-            const optCash = document.getElementById('opt-cash');
+            const options = ['all', 'tpp', 'cash'];
+            
+            // UI State Update
+            slider.className = 'switch-slider ' + 'pos-' + mode;
+            options.forEach(opt => {
+                document.getElementById('opt-' + opt).classList.toggle('active', opt === mode);
+            });
 
-            if (mode === 'tpp') {
-                slider.classList.remove('right');
-                optTpp.classList.add('active');
-                optCash.classList.remove('active');
-            } else {
-                slider.classList.add('right');
-                optCash.classList.add('active');
-                optTpp.classList.remove('active');
-            }
             render();
         }
 
@@ -246,16 +246,16 @@
             const selectedMonth = document.getElementById('monthFilter').value;
             const selectedPtTypes = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
             
-            // Core Filters
             let filtered = masterData.filter(d => selectedPtTypes.includes(d.patient_type));
             
-            // Switch Logic using column 'type'
+            // Logic for 3-way Filter
             if (paymentMode === 'cash') {
                 filtered = filtered.filter(d => d.type === 'Self Pay');
-            } else {
+            } else if (paymentMode === 'tpp') {
                 const tppArray = ['HMO', 'INSURANCE', 'INDUSTRIAL'];
                 filtered = filtered.filter(d => tppArray.includes(d.type));
             }
+            // If paymentMode === 'all', no filtering applied to 'type' column
 
             if (currentDept !== 'all') filtered = filtered.filter(d => d.department === currentDept);
             if (selectedMonth !== 'all') filtered = filtered.filter(d => d.month === selectedMonth);
