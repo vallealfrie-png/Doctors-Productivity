@@ -178,9 +178,15 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="neon-card card-rose p-6 h-[450px]"><canvas id="revenueChart"></canvas></div>
-            <div class="neon-card card-amber p-6 h-[450px] overflow-y-auto">
+            <div class="neon-card card-amber p-6 h-[450px] overflow-y-auto" id="leaderboardParent">
                 <h3 class="text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-4 border-b border-neutral-900 pb-2">Personnel Rankings</h3>
                 <div id="leaderboard" class="space-y-3 text-xs"></div>
+                <!-- Load More Button Container -->
+                <div id="loadMoreContainer" class="mt-6 text-center hidden">
+                    <button onclick="loadMoreDoctors()" class="px-6 py-2 border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em] rounded hover:bg-indigo-500/20 transition-all">
+                        See More Results
+                    </button>
+                </div>
             </div>
         </div>
     </main>
@@ -195,6 +201,10 @@
         let paymentMode = 'all'; 
         let activeTier = null; 
         let prevCounts = { total: 0, t1: 0, t2: 0, t3: 0, t4: 0, t5: 0, revenue: 0 };
+        
+        // Pagination Variables
+        let visibleCount = 50;
+        let currentDoctorList = [];
 
         async function init() {
             let allRows = [], rangeStart = 0, pageSize = 1000;
@@ -278,6 +288,9 @@
         function handleFilterUpdate() { render(); }
 
         function render() {
+            // Reset pagination when filter changes
+            visibleCount = 50; 
+
             const selectedMonth = document.getElementById('monthFilter').value;
             const selectedPtTypes = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
             
@@ -314,6 +327,7 @@
             }
 
             doctorTotals.sort((a, b) => b.revenue - a.revenue);
+            currentDoctorList = doctorTotals; // Save to global for pagination
 
             animateValue("globalRevenue", prevCounts.revenue, globalTotal, true);
             animateValue("totalDoctors", prevCounts.total, doctorTotals.length);
@@ -324,13 +338,20 @@
             brackets.forEach((b, i) => prevCounts[`t${i+1}`] = b.count);
 
             document.getElementById('activeDeptLabel').innerText = currentDept.toUpperCase();
-            updateVisuals(doctorTotals);
+            updateVisuals();
+        }
+
+        function loadMoreDoctors() {
+            visibleCount += 100;
+            updateVisuals();
         }
 
         let mainChart;
-        function updateVisuals(data) {
+        function updateVisuals() {
             const lb = document.getElementById('leaderboard');
-            lb.innerHTML = data.slice(0, 50).map(d => `
+            const dataToDisplay = currentDoctorList.slice(0, visibleCount);
+
+            lb.innerHTML = dataToDisplay.map(d => `
                 <div class="flex justify-between border-b border-neutral-900 pb-2 items-center group">
                     <a href="profile.html?name=${encodeURIComponent(d.name)}" 
                        class="text-neutral-300 font-bold uppercase truncate pr-4 hover:text-indigo-400 transition-colors flex items-center">
@@ -340,7 +361,15 @@
                 </div>
             `).join('');
 
-            const top10 = data.slice(0, 10);
+            // Handle "See More" visibility
+            const btnContainer = document.getElementById('loadMoreContainer');
+            if (currentDoctorList.length > visibleCount) {
+                btnContainer.classList.remove('hidden');
+            } else {
+                btnContainer.classList.add('hidden');
+            }
+
+            const top10 = currentDoctorList.slice(0, 10);
             if (mainChart) mainChart.destroy();
             mainChart = new Chart(document.getElementById('revenueChart'), {
                 type: 'bar',
